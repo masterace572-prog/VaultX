@@ -1,7 +1,7 @@
 {
-    "versionCode":  3,
-    "versionName":  "1.2.0",
-    "downloadUrl":  "https://github.com/masterace572-prog/VaultX/releases/download/v1.2.0/vaultx-user-v1.2.0.apk",
+    "versionCode":  4,
+    "versionName":  "1.2.1",
+    "downloadUrl":  "https://github.com/masterace572-prog/VaultX/releases/download/v1.2.1/vaultx-user-v1.2.1.apk",
     "forcedUpdate":  false,
     "changelog":  [
                       "🔐 Autofill Service — Securely autofill your passwords in any app or browser",

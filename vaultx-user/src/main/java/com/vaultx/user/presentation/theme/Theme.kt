@@ -82,9 +82,12 @@ fun VaultXTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // If overridden by user setting, use that; otherwise use system
     userDarkModeOverride: Boolean? = null,
+    // Enable dynamic color support by default
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val effectiveDarkMode = userDarkModeOverride ?: darkTheme
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     // Smooth crossfade animation on theme toggle
     val animatedPrimary by animateColorAsState(
@@ -103,14 +106,16 @@ fun VaultXTheme(
         label = "surface_color"
     )
 
-    val colorScheme = if (effectiveDarkMode) {
-        DarkColorScheme.copy(
+    val colorScheme = when {
+        dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S -> {
+            if (effectiveDarkMode) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        effectiveDarkMode -> DarkColorScheme.copy(
             primary = animatedPrimary,
             background = animatedBackground,
             surface = animatedSurface
         )
-    } else {
-        LightColorScheme.copy(
+        else -> LightColorScheme.copy(
             primary = animatedPrimary,
             background = animatedBackground,
             surface = animatedSurface

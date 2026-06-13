@@ -69,11 +69,13 @@ fun AccountCard(
     onClick:       () -> Unit,
     modifier:      Modifier = Modifier
 ) {
+    val visual = platformVisual(platformType)
     Surface(
         onClick       = onClick,
         modifier      = modifier.fillMaxWidth(),
         shape         = ShapeCard,
         color         = MaterialTheme.colorScheme.surface,
+        border        = androidx.compose.foundation.BorderStroke(1.5.dp, visual.color.copy(alpha = 0.4f)),
         tonalElevation = 0.dp,
     ) {
         Row(
