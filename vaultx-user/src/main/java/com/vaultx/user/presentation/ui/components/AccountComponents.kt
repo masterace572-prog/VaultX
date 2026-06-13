@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.blur
 import com.vaultx.user.data.model.PlatformType
 import com.vaultx.user.presentation.theme.*
@@ -100,15 +101,15 @@ fun AccountCard(
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .blur(24.dp)
-                .background(glowColor.copy(alpha = 0.3f), ShapeCard)
+                .blur(20.dp)
+                .background(glowColor.copy(alpha = 0.08f), ShapeCard)
         )
         Surface(
             onClick       = onClick,
             modifier      = Modifier.fillMaxWidth(),
             shape         = ShapeCard,
             color         = MaterialTheme.colorScheme.surface,
-            border        = androidx.compose.foundation.BorderStroke(1.5.dp, visual.color.copy(alpha = 0.4f)),
+            border        = androidx.compose.foundation.BorderStroke(1.dp, visual.color.copy(alpha = 0.15f)),
             tonalElevation = 0.dp,
         ) {
         Row(
@@ -130,7 +131,7 @@ fun AccountCard(
                         maxLines = 1,
                     )
                     if (isGameAccount) {
-                        Surface(
+                         Surface(
                             shape = ShapeBadge,
                             color = PlatformGame.copy(alpha = 0.15f)
                         ) {
@@ -160,14 +161,14 @@ fun AccountCard(
                         imageVector = Icons.Outlined.Star,
                         contentDescription = "Favourite",
                         tint = DarkBadgePremium,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(14.dp)
                     )
                 }
                 Icon(
                     imageVector = Icons.Outlined.ChevronRight,
                     contentDescription = null,
-                    tint     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(20.dp)
+                    tint     = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
@@ -180,11 +181,13 @@ fun AccountCard(
 fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
         text     = title,
-        style    = MaterialTheme.typography.labelMedium,
-        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+        style    = MaterialTheme.typography.labelMedium.copy(
+            letterSpacing = 0.5.sp
+        ),
+        color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 0.dp, vertical = 6.dp)
     )
 }
 

@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,10 +15,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.vaultx.user.data.model.AccountEntry
 import com.vaultx.user.data.model.PlatformType
@@ -113,161 +119,169 @@ fun AccountDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ── Platform header card ──────────────────────────────────────────
+            // ── Platform header (Un-carded Apple Style) ──────────────────────
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                PlatformIcon(
+                    type = e.platformType,
+                    size = 72.dp,
+                    modifier = Modifier.shadow(8.dp, shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = e.platformLabel,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.02).em
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = e.platformType.displayName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+                if (e.isFavorite || e.gameAccount != null) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (e.isFavorite) {
+                            Surface(
+                                shape = ShapeBadge,
+                                color = DarkBadgePremium.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    "★ Favourite",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = DarkBadgePremium,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                        if (e.gameAccount != null) {
+                            Surface(
+                                shape = ShapeBadge,
+                                color = PlatformGame.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    "GAME",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = PlatformGame,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Unified Credentials Card ──────────────────────────────────────
             Surface(
                 shape = ShapeCard,
                 color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier              = Modifier.padding(20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment     = Alignment.CenterVertically
-                ) {
-                    PlatformIcon(type = e.platformType, size = 56.dp)
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(e.platformLabel, style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface)
-                        Text(e.platformType.displayName, style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (e.isFavorite) {
-                                Surface(shape = ShapeBadge,
-                                    color = DarkBadgePremium.copy(alpha = 0.15f)) {
-                                    Text("★ Favourite", style = MaterialTheme.typography.labelSmall,
-                                        color = DarkBadgePremium,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
-                                }
-                            }
-                            if (e.gameAccount != null) {
-                                Surface(shape = ShapeBadge,
-                                    color = PlatformGame.copy(alpha = 0.15f)) {
-                                    Text("GAME", style = MaterialTheme.typography.labelSmall,
-                                        color = PlatformGame,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ── Credential fields ─────────────────────────────────────────────
-            SectionHeader(title = "CREDENTIALS")
-
-            CredentialRow(
-                label    = "Username / Email",
-                value    = e.username,
-                icon     = Icons.Outlined.Person,
-                onCopy   = { e.username?.let { copyToClipboard("Username / Email", it) } },
-                isCopied = copiedField == "Username / Email"
-            )
-
-            // ── Password row (tap to reveal) ──────────────────────────────────
-            Surface(
-                shape    = ShapeCard,
-                color    = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(Icons.Outlined.Lock, null,
-                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                        Text("Password", style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(Modifier.weight(1f))
-
-                        // Reveal toggle
-                        VaultIconButton(
-                            icon = if (passwordVisible) Icons.Outlined.VisibilityOff
-                                   else Icons.Outlined.Visibility,
-                            onClick = { passwordVisible = !passwordVisible },
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        // Copy
-                        AnimatedCopyButton(
-                            isCopied = copiedField == "Password",
-                            onClick  = { copyToClipboard("Password", e.password) }
+                Column {
+                    val hasUsername = !e.username.isNullOrBlank()
+                    
+                    if (hasUsername) {
+                        CredentialRowItem(
+                            label = "Username / Email",
+                            value = e.username,
+                            icon = Icons.Outlined.Person,
+                            onCopy = { copyToClipboard("Username / Email", e.username!!) },
+                            isCopied = copiedField == "Username / Email"
                         )
                     }
 
-                    AnimatedContent(
-                        targetState = passwordVisible,
-                        transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(150)) },
-                        label = "password_reveal"
-                    ) { visible ->
-                        if (visible) {
-                            Text(
-                                text  = e.password,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        } else {
-                            Text(
-                                text  = "•".repeat(e.password.length.coerceAtMost(16)),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    if (hasUsername) {
+                        VaultDivider()
                     }
-                }
-            }
 
-            // ── Autofill Details ─────────────────────────────────────────────
-            if (e.websiteUrl.isNotBlank() || e.appPackageName.isNotBlank()) {
-                SectionHeader(title = "AUTOFILL DETAILS")
-                if (e.websiteUrl.isNotBlank()) {
-                    CredentialRow(
-                        label    = "Website URL",
-                        value    = e.websiteUrl,
-                        icon     = Icons.Outlined.Language,
-                        onCopy   = { copyToClipboard("Website URL", e.websiteUrl) },
-                        isCopied = copiedField == "Website URL"
+                    PasswordRowItem(
+                        password = e.password,
+                        passwordVisible = passwordVisible,
+                        onVisibilityToggle = { passwordVisible = !passwordVisible },
+                        onCopy = { copyToClipboard("Password", e.password) },
+                        isCopied = copiedField == "Password"
                     )
-                }
-                if (e.appPackageName.isNotBlank()) {
-                    CredentialRow(
-                        label    = "App Package Name",
-                        value    = e.appPackageName,
-                        icon     = Icons.Outlined.Android,
-                        onCopy   = { copyToClipboard("App Package Name", e.appPackageName) },
-                        isCopied = copiedField == "App Package Name"
-                    )
+
+                    if (e.websiteUrl.isNotBlank()) {
+                        VaultDivider()
+                        CredentialRowItem(
+                            label = "Website URL",
+                            value = e.websiteUrl,
+                            icon = Icons.Outlined.Language,
+                            onCopy = { copyToClipboard("Website URL", e.websiteUrl) },
+                            isCopied = copiedField == "Website URL"
+                        )
+                    }
+
+                    if (e.appPackageName.isNotBlank()) {
+                        VaultDivider()
+                        CredentialRowItem(
+                            label = "App Package Name",
+                            value = e.appPackageName,
+                            icon = Icons.Outlined.Android,
+                            onCopy = { copyToClipboard("App Package Name", e.appPackageName) },
+                            isCopied = copiedField == "App Package Name"
+                        )
+                    }
                 }
             }
 
             // ── Game details ──────────────────────────────────────────────────
             e.gameAccount?.let { game ->
+                Spacer(Modifier.height(4.dp))
                 SectionHeader(title = "GAME DETAILS")
-                Surface(shape = ShapeCard, color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        GameDetailRow("Game Name", game.gameName)
-                        game.inGameId?.let { GameDetailRow("In-Game ID", it) }
-                        game.description?.let { GameDetailRow("Description", it) }
+                Surface(
+                    shape = ShapeCard,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        GameDetailRowItem("Game Name", game.gameName, Icons.Outlined.SportsEsports)
+                        game.inGameId?.takeIf { it.isNotBlank() }?.let { id ->
+                            VaultDivider()
+                            GameDetailRowItem("In-Game ID", id, Icons.Outlined.Badge)
+                        }
+                        game.description?.takeIf { it.isNotBlank() }?.let { desc ->
+                            VaultDivider()
+                            GameDetailRowItem("Description", desc, Icons.Outlined.Description)
+                        }
                     }
                 }
             }
 
-            // ── Timestamps ────────────────────────────────────────────────────
-            SectionHeader(title = "INFO")
-            Surface(shape = ShapeCard, color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    InfoRow("Created",  formatTimestamp(e.createdAt))
-                    InfoRow("Updated",  formatTimestamp(e.updatedAt))
-                }
+            // ── Metadata Footer ───────────────────────────────────────────────
+            Spacer(Modifier.height(16.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Created: ${formatTimestamp(e.createdAt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+                Text(
+                    text = "Last Updated: ${formatTimestamp(e.updatedAt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
             }
-
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 
@@ -303,9 +317,9 @@ fun AccountDetailScreen(
     }
 }
 
-// ── Credential row component ──────────────────────────────────────────────────
+// ── Credential row item component ─────────────────────────────────────────────
 @Composable
-private fun CredentialRow(
+private fun CredentialRowItem(
     label:    String,
     value:    String?,
     icon:     androidx.compose.ui.graphics.vector.ImageVector,
@@ -313,20 +327,124 @@ private fun CredentialRow(
     isCopied: Boolean
 ) {
     if (value == null) return
-    Surface(shape = ShapeCard, color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(label, style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(value, style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            icon, null,
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+            modifier = Modifier.size(20.dp)
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        AnimatedCopyButton(isCopied = isCopied, onClick = onCopy)
+    }
+}
+
+@Composable
+private fun PasswordRowItem(
+    password:           String,
+    passwordVisible:    Boolean,
+    onVisibilityToggle: () -> Unit,
+    onCopy:             () -> Unit,
+    isCopied:           Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            Icons.Outlined.Lock, null,
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+            modifier = Modifier.size(20.dp)
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                "Password",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
+            AnimatedContent(
+                targetState = passwordVisible,
+                transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(150)) },
+                label = "password_reveal"
+            ) { visible ->
+                if (visible) {
+                    Text(
+                        text  = password,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                } else {
+                    Text(
+                        text  = "•".repeat(password.length.coerceAtMost(16)),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onVisibilityToggle, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.size(18.dp)
+                )
             }
             AnimatedCopyButton(isCopied = isCopied, onClick = onCopy)
+        }
+    }
+}
+
+@Composable
+private fun GameDetailRowItem(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            icon, null,
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+            modifier = Modifier.size(20.dp)
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
@@ -347,27 +465,6 @@ private fun AnimatedCopyButton(isCopied: Boolean, onClick: () -> Unit) {
                 modifier = Modifier.size(18.dp)
             )
         }
-    }
-}
-
-@Composable
-private fun GameDetailRow(label: String, value: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface)
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
