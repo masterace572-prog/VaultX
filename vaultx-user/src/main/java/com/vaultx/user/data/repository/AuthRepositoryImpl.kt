@@ -69,6 +69,8 @@ class AuthRepositoryImpl @Inject constructor(
             // 5. Open the encrypted Room DB
             vaultSession.openVault(cryptoManager.keyToBytes(derivedKey))
         }
+    }.onFailure { e ->
+        android.util.Log.e("AuthRepository", "login failed for $email", e)
     }
 
     // ── Register ──────────────────────────────────────────────────────────────
@@ -119,6 +121,8 @@ class AuthRepositoryImpl @Inject constructor(
 
             vaultSession.openVault(cryptoManager.keyToBytes(derivedKey))
         }
+    }.onFailure { e ->
+        android.util.Log.e("AuthRepository", "register failed for $email", e)
     }
 
     // ── Logout ────────────────────────────────────────────────────────────────
@@ -161,6 +165,8 @@ class AuthRepositoryImpl @Inject constructor(
                 .putString(PREF_PIN_WRAPPED_IV, pinWrapped.iv)
                 .apply()
         }
+    }.onFailure { e ->
+        android.util.Log.e("AuthRepository", "setupAppPin failed", e)
     }
 
     override suspend fun unlockWithPin(pin: String): Result<Unit> = runCatching {
@@ -185,6 +191,8 @@ class AuthRepositoryImpl @Inject constructor(
             // 4. Open vault
             vaultSession.openVault(cryptoManager.keyToBytes(dbKey))
         }
+    }.onFailure { e ->
+        android.util.Log.e("AuthRepository", "unlockWithPin failed", e)
     }
 
     override suspend fun unlockWithMasterPassword(password: String): Result<Unit> = runCatching {
@@ -194,6 +202,8 @@ class AuthRepositoryImpl @Inject constructor(
             val derivedKey = cryptoManager.deriveKey(password, salt)
             vaultSession.openVault(cryptoManager.keyToBytes(derivedKey))
         }
+    }.onFailure { e ->
+        android.util.Log.e("AuthRepository", "unlockWithMasterPassword failed", e)
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

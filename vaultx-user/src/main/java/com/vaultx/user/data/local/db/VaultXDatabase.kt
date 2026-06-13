@@ -35,9 +35,12 @@ abstract class VaultXDatabase : RoomDatabase() {
          *                It is NEVER stored; caller must supply it on each launch.
          */
         fun buildEncrypted(context: Context, passphrase: ByteArray): VaultXDatabase {
-            val factory = SupportFactory(SQLiteDatabase.getBytes(
-                passphrase.toString(Charsets.UTF_8).toCharArray()
-            ))
+            try {
+                SQLiteDatabase.loadLibs(context.applicationContext)
+            } catch (e: Exception) {
+                // Ignore library load errors if already loaded
+            }
+            val factory = SupportFactory(passphrase)
             return Room.databaseBuilder(
                 context.applicationContext,
                 VaultXDatabase::class.java,

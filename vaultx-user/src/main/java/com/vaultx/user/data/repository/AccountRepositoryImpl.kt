@@ -89,29 +89,38 @@ class AccountRepositoryImpl @Inject constructor(
         return json.decodeFromString(jsonStr)
     }
 
+    private fun decryptOrNull(entity: AccountEntryEntity): AccountEntry? {
+        return try {
+            decrypt(entity)
+        } catch (e: Exception) {
+            android.util.Log.e("AccountRepository", "Decryption failed for entry ${entity.id}", e)
+            null
+        }
+    }
+
     // ── Observe all (Flow) ────────────────────────────────────────────────────
 
     override fun observeAccounts(): Flow<List<AccountEntry>> =
         vaultSession.database.accountEntryDao()
             .observeAll()
-            .map { entities -> entities.map { decrypt(it) } }
+            .map { entities -> entities.mapNotNull { decryptOrNull(it) } }
 
     override fun searchAccounts(query: String): Flow<List<AccountEntry>> =
         vaultSession.database.accountEntryDao()
             .searchEntries(query)
-            .map { entities -> entities.map { decrypt(it) } }
+            .map { entities -> entities.mapNotNull { decryptOrNull(it) } }
 
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
     override suspend fun getAccountById(id: String): AccountEntry? =
         vaultSession.database.accountEntryDao()
             .getById(id)
-            ?.let { decrypt(it) }
+            ?.let { decryptOrNull(it) }
 
     override suspend fun getAllAccountsSync(): List<AccountEntry> =
         vaultSession.database.accountEntryDao()
             .getAllSync()
-            .map { decrypt(it) }
+            .mapNotNull { decryptOrNull(it) }
 
     override suspend fun saveAccount(entry: AccountEntry): Result<Unit> = runCatching {
         val entity = encrypt(entry.copy(id = UUID.randomUUID().toString()))
@@ -120,6 +129,8 @@ class AccountRepositoryImpl @Inject constructor(
             PendingSyncEntity(entryId = entity.id, operation = "UPSERT")
         )
         triggerAutoSync()
+    }.onFailure { e ->
+        android.util.Log.e("AccountRepository", "saveAccount failed", e)
     }
 
     override suspend fun updateAccount(entry: AccountEntry): Result<Unit> = runCatching {
@@ -129,6 +140,8 @@ class AccountRepositoryImpl @Inject constructor(
             PendingSyncEntity(entryId = entity.id, operation = "UPSERT")
         )
         triggerAutoSync()
+    }.onFailure { e ->
+        android.util.Log.e("AccountRepository", "updateAccount failed", e)
     }
 
     override suspend fun deleteAccount(id: String): Result<Unit> = runCatching {
@@ -137,6 +150,8 @@ class AccountRepositoryImpl @Inject constructor(
             PendingSyncEntity(entryId = id, operation = "DELETE")
         )
         triggerAutoSync()
+    }.onFailure { e ->
+        android.util.Log.e("AccountRepository", "deleteAccount failed", e)
     }
 
     override suspend fun countAccounts(): Int =
@@ -280,6 +295,8 @@ class AccountRepositoryImpl @Inject constructor(
                 file.writeText(exportPayload)
             }
         }
+    }.onFailure { e ->
+        android.util.Log.e("AccountRepository", "exportToJson failed", e)
     }
 
     private suspend fun triggerAutoSync() {

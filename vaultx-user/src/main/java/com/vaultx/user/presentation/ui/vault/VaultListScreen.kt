@@ -36,9 +36,7 @@ import com.vaultx.user.presentation.viewmodel.AccountViewModel
 enum class VaultFilter(val displayName: String, val type: EntryType?) {
     ALL("All", null),
     LOGINS("Logins", EntryType.LOGIN),
-    GAMES("Games", EntryType.GAME),
-    NOTES("Notes", EntryType.NOTE),
-    CARDS("Cards", EntryType.CARD)
+    GAMES("Games", EntryType.GAME)
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)

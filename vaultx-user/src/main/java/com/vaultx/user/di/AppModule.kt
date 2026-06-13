@@ -35,16 +35,39 @@ object AppModule {
     @Provides
     @Singleton
     fun provideEncryptedPrefs(@ApplicationContext context: Context): android.content.SharedPreferences {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        return EncryptedSharedPreferences.create(
-            context,
-            "vaultx_secure_prefs",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        return try {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                context,
+                "vaultx_secure_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            try {
+                // Delete existing preferences file as it may be corrupted or have mismatched Keystore keys
+                val sharedPrefsFile = java.io.File(context.filesDir.parentFile, "shared_prefs/vaultx_secure_prefs.xml")
+                if (sharedPrefsFile.exists()) {
+                    sharedPrefsFile.delete()
+                }
+                val masterKey = MasterKey.Builder(context)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
+                EncryptedSharedPreferences.create(
+                    context,
+                    "vaultx_secure_prefs",
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                )
+            } catch (ex: Exception) {
+                // Fallback to normal shared preferences if keystore is completely broken
+                context.getSharedPreferences("vaultx_secure_prefs_fallback", Context.MODE_PRIVATE)
+            }
+        }
     }
 
     // ── Firebase ──────────────────────────────────────────────────────────────

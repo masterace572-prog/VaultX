@@ -76,7 +76,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun loadSettings() {
         viewModelScope.launch {
-            _accountCount.value = accountRepository.countAccounts()
+            runCatching { _accountCount.value = accountRepository.countAccounts() }
             _userEmail.value    = firebaseAuth.currentUser?.email ?: ""
             _biometricLockEnabled.value = prefs.getBoolean("pref_biometric_enabled", false)
             _appLockEnabled.value = prefs.getBoolean("pref_app_lock_enabled", false)

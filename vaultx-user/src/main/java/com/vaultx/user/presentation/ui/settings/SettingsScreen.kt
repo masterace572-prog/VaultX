@@ -7,12 +7,17 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -43,6 +48,10 @@ fun SettingsScreen(
     settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val isDarkMode      by appViewModel.isDarkMode.collectAsState()
+    val themeMode       by appViewModel.themeMode.collectAsState()
+    val accentColor     by appViewModel.accentColor.collectAsState()
+    val highContrast    by appViewModel.highContrast.collectAsState()
+    val fontSizeScale   by appViewModel.fontSizeScale.collectAsState()
     val useDynamicTheming by settingsViewModel.useDynamicTheming.collectAsState()
     val accountCount    by settingsViewModel.accountCount.collectAsState()
     val cloudSyncEnabled by settingsViewModel.cloudSyncEnabled.collectAsState()
@@ -64,6 +73,7 @@ fun SettingsScreen(
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
     var exportPassword by remember { mutableStateOf("") }
     
     Scaffold(
@@ -107,21 +117,104 @@ fun SettingsScreen(
             // ── Appearance ────────────────────────────────────────────────────
             SettingsSectionLabel("APPEARANCE")
             SettingsCard {
-                SettingsToggleRow(
-                    icon    = if (isDarkMode == true) Icons.Outlined.DarkMode else Icons.Outlined.LightMode,
-                    title   = "Dark Mode",
-                    subtitle = "Switch between light and dark theme",
-                    checked = isDarkMode ?: false,
-                    onToggle = { appViewModel.toggleDarkMode(it) }
+                SettingsActionRow(
+                    icon     = Icons.Outlined.SettingsBrightness,
+                    title    = "Theme Mode",
+                    subtitle = "Selected: ${themeMode.lowercase().replaceFirstChar { it.uppercase() }}",
+                    onClick  = { showThemeDialog = true }
                 )
                 VaultDivider()
                 SettingsToggleRow(
                     icon     = Icons.Outlined.Palette,
                     title    = "Material You",
-                    subtitle = "Use dynamic colors based on your wallpaper (Android 12+)",
+                    subtitle = "Use dynamic colors based on wallpaper (Android 12+)",
                     checked  = useDynamicTheming,
                     onToggle = { settingsViewModel.setDynamicTheming(it) }
                 )
+                if (!useDynamicTheming) {
+                    VaultDivider()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Outlined.ColorLens, null, tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp))
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Accent Color", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                            Text("Select primary theme color", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                val colors = listOf(
+                                    "PURPLE" to AccentPurpleDark,
+                                    "BLUE" to AccentBlueDark,
+                                    "GREEN" to AccentGreenDark,
+                                    "RED" to AccentRedDark,
+                                    "ORANGE" to AccentOrangeDark
+                                )
+                                colors.forEach { (name, color) ->
+                                    val isSelected = accentColor == name
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .background(color, CircleShape)
+                                            .clickable { appViewModel.setAccentColor(name) }
+                                            .border(
+                                                width = if (isSelected) 2.dp else 0.dp,
+                                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                                shape = CircleShape
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                VaultDivider()
+                SettingsToggleRow(
+                    icon     = Icons.Outlined.Contrast,
+                    title    = "High Contrast",
+                    subtitle = "Maximize text legibility",
+                    checked  = highContrast,
+                    onToggle = { appViewModel.toggleHighContrast(it) }
+                )
+                VaultDivider()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Outlined.TextFields, null, tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Text Size", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                            val scaleLabel = when {
+                                fontSizeScale <= 0.9f -> "Small"
+                                fontSizeScale <= 1.05f -> "Default"
+                                fontSizeScale <= 1.2f -> "Large"
+                                else -> "Extra Large"
+                            }
+                            Text("Scale: $scaleLabel (${(fontSizeScale * 100).toInt()}%)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Slider(
+                        value = fontSizeScale,
+                        onValueChange = { appViewModel.setFontSizeScale(it) },
+                        valueRange = 0.85f..1.3f,
+                        steps = 2,
+                        colors = SliderDefaults.colors(
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                            inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        )
+                    )
+                }
             }
 
             // ── Security ──────────────────────────────────────────────────────
@@ -391,6 +484,51 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showExportDialog = false }) { Text("Cancel") }
+            },
+            shape          = ShapeCard,
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
+    if (showThemeDialog) {
+        val modes = listOf(
+            "SYSTEM" to "System Default",
+            "LIGHT" to "Light",
+            "DARK" to "Dark",
+            "AMOLED" to "AMOLED Black"
+        )
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            title = { Text("Choose Theme Mode") },
+            text = {
+                Column {
+                    modes.forEach { (mode, label) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    appViewModel.setThemeMode(mode)
+                                    showThemeDialog = false
+                                }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = themeMode == mode,
+                                onClick = {
+                                    appViewModel.setThemeMode(mode)
+                                    showThemeDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(label, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showThemeDialog = false }) { Text("Cancel") }
             },
             shape          = ShapeCard,
             containerColor = MaterialTheme.colorScheme.surface

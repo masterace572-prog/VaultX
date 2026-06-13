@@ -31,6 +31,9 @@ class HomeViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     init {
         loadData()
     }
@@ -42,6 +45,7 @@ class HomeViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
+            _error.value = null
             runCatching {
                 // Load user profile
                 val uid = firebaseAuth.currentUser?.uid
@@ -89,6 +93,9 @@ class HomeViewModel @Inject constructor(
                     discordLink        = configDoc.getString("discord_link") ?: "",
                     updateDialogMessage= configDoc.getString("update_dialog_message") ?: "A new update is available. Please update to the latest version."
                 )
+            }.onFailure { e ->
+                android.util.Log.e("HomeViewModel", "Error loading profile/config", e)
+                _error.value = "Failed to load dashboard: ${e.localizedMessage ?: "Network error"}"
             }
             _isLoading.value = false
         }

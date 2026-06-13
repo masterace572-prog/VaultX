@@ -82,7 +82,11 @@ class BiometricHelper @Inject constructor() {
             // If you want a negative button (fallback to password), remove DEVICE_CREDENTIAL.
             .build()
 
-        prompt.authenticate(promptInfo)
+        try {
+            prompt.authenticate(promptInfo)
+        } catch (e: Exception) {
+            onResult(BiometricResult.Error(-1, e.localizedMessage ?: "Biometric authentication failed"))
+        }
     }
 
     /**
@@ -121,6 +125,10 @@ class BiometricHelper @Inject constructor() {
             .setNegativeButtonText("Use Master Password")
             .build()
 
-        prompt.authenticate(promptInfo, cryptoObject)
+        try {
+            prompt.authenticate(promptInfo, cryptoObject)
+        } catch (e: Exception) {
+            onResult(BiometricResult.Error(-1, e.localizedMessage ?: "Biometric authentication failed"), null)
+        }
     }
 }

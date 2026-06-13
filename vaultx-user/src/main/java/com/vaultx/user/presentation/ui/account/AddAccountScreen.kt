@@ -177,108 +177,7 @@ fun AddAccountScreen(
                             )
                         }
 
-                        EntryType.CARD -> {
-                            CardPreview(
-                                cardNumber = cardNumber,
-                                cardHolder = cardHolder,
-                                cardExpiry = cardExpiry
-                            )
 
-                            Spacer(Modifier.height(4.dp))
-
-                            VaultTextField(
-                                value         = platformLabel,
-                                onValueChange = viewModel::onPlatformLabelChanged,
-                                label         = "Card Label *",
-                                placeholder   = "e.g. Personal Visa",
-                                leadingIcon   = Icons.Outlined.Label,
-                                isError       = uiState is AccountUiState.Error && platformLabel.isBlank(),
-                                errorMessage  = "Card label is required"
-                            )
-
-                            VaultTextField(
-                                value         = cardHolder,
-                                onValueChange = viewModel::onCardHolderChanged,
-                                label         = "Cardholder Name",
-                                placeholder   = "JOHN DOE",
-                                leadingIcon   = Icons.Outlined.Person
-                            )
-
-                            VaultTextField(
-                                value         = cardNumber,
-                                onValueChange = { val clean = it.filter { c -> c.isDigit() }.take(16); viewModel.onCardNumberChanged(clean) },
-                                label         = "Card Number *",
-                                placeholder   = "0000 0000 0000 0000",
-                                leadingIcon   = Icons.Outlined.CreditCard,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                isError       = uiState is AccountUiState.Error && cardNumber.isBlank(),
-                                errorMessage  = "Card number is required"
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                VaultTextField(
-                                    value         = cardExpiry,
-                                    onValueChange = {
-                                        var clean = it.replace("/", "").filter { c -> c.isDigit() }.take(4)
-                                        if (clean.length > 2) {
-                                            clean = clean.substring(0, 2) + "/" + clean.substring(2)
-                                        }
-                                        viewModel.onCardExpiryChanged(clean)
-                                    },
-                                    label         = "Expiry (MM/YY)",
-                                    placeholder   = "MM/YY",
-                                    leadingIcon   = Icons.Outlined.CalendarToday,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    modifier      = Modifier.weight(1f)
-                                )
-
-                                VaultTextField(
-                                    value         = cardCvv,
-                                    onValueChange = { viewModel.onCardCvvChanged(it.filter { c -> c.isDigit() }.take(4)) },
-                                    label         = "CVV",
-                                    placeholder   = "000",
-                                    leadingIcon   = Icons.Outlined.Pin,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    modifier      = Modifier.weight(1f)
-                                )
-                            }
-
-                            VaultTextField(
-                                value         = cardPin,
-                                onValueChange = { viewModel.onCardPinChanged(it.filter { c -> c.isDigit() }.take(6)) },
-                                label         = "Card PIN (optional)",
-                                placeholder   = "0000",
-                                leadingIcon   = Icons.Outlined.Lock,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                            )
-                        }
-
-                        EntryType.NOTE -> {
-                            VaultTextField(
-                                value         = platformLabel,
-                                onValueChange = viewModel::onPlatformLabelChanged,
-                                label         = "Note Title *",
-                                placeholder   = "e.g. WiFi Password, Lockbox Code",
-                                leadingIcon   = Icons.Outlined.Label,
-                                isError       = uiState is AccountUiState.Error && platformLabel.isBlank(),
-                                errorMessage  = "Note title is required"
-                            )
-
-                            VaultTextField(
-                                value         = noteContent,
-                                onValueChange = viewModel::onNoteContentChanged,
-                                label         = "Note Content *",
-                                placeholder   = "Type your secure note here...",
-                                leadingIcon   = Icons.Outlined.Description,
-                                singleLine    = false,
-                                maxLines      = 10,
-                                isError       = uiState is AccountUiState.Error && noteContent.isBlank(),
-                                errorMessage  = "Note content is required"
-                            )
-                        }
 
                         EntryType.GAME -> {
                             PlatformSelectorCard(
@@ -315,6 +214,16 @@ fun AddAccountScreen(
                             )
 
                             VaultTextField(
+                                value         = username,
+                                onValueChange = viewModel::onUsernameChanged,
+                                label         = "Username or Email *",
+                                placeholder   = "you@example.com or @username",
+                                leadingIcon   = Icons.Outlined.Person,
+                                isError       = uiState is AccountUiState.Error && username.isBlank(),
+                                errorMessage  = "Username or email is required"
+                            )
+
+                            VaultTextField(
                                 value         = password,
                                 onValueChange = viewModel::onPasswordChanged,
                                 label         = "Password *",
@@ -338,6 +247,7 @@ fun AddAccountScreen(
                                 leadingIcon   = Icons.Outlined.Description
                             )
                         }
+                        else -> {}
                     }
                 }
             }
@@ -353,7 +263,7 @@ fun AddAccountScreen(
                 EntryType.LOGIN -> username.isNotEmpty() && password.isNotEmpty()
                 EntryType.CARD -> platformLabel.isNotEmpty() && cardNumber.isNotEmpty()
                 EntryType.NOTE -> platformLabel.isNotEmpty() && noteContent.isNotEmpty()
-                EntryType.GAME -> platformLabel.isNotEmpty() && gameName.isNotEmpty() && password.isNotEmpty()
+                EntryType.GAME -> platformLabel.isNotEmpty() && gameName.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty()
             }
 
             VaultButton(
@@ -394,8 +304,6 @@ fun EntryTypeSegmentedControl(
 ) {
     val types = listOf(
         EntryType.LOGIN to "Login",
-        EntryType.CARD to "Card",
-        EntryType.NOTE to "Note",
         EntryType.GAME to "Game"
     )
 
@@ -455,143 +363,7 @@ fun EntryTypeSegmentedControl(
     }
 }
 
-@Composable
-fun CardPreview(
-    cardNumber: String,
-    cardHolder: String,
-    cardExpiry: String,
-    modifier: Modifier = Modifier
-) {
-    val cleanNumber = cardNumber.replace(" ", "")
-    val cardBrand = when {
-        cleanNumber.startsWith("4") -> "VISA"
-        cleanNumber.startsWith("5") -> "MASTERCARD"
-        cleanNumber.startsWith("3") -> "AMEX"
-        else -> "CARD"
-    }
 
-    val brandColor = when (cardBrand) {
-        "VISA" -> Color(0xFF1E293B)
-        "MASTERCARD" -> Color(0xFF3B0764)
-        "AMEX" -> Color(0xFF0F172A)
-        else -> MaterialTheme.colorScheme.primary
-    }
-
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = brandColor,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-        modifier = modifier
-            .fillMaxWidth()
-            .height(170.dp),
-        tonalElevation = 6.dp
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.04f),
-                    radius = size.minDimension * 0.7f,
-                    center = androidx.compose.ui.geometry.Offset(size.width, size.height * 0.1f)
-                )
-            }
-
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = Color(0xFFF59E0B),
-                        modifier = Modifier.size(30.dp, 22.dp)
-                    ) {}
-                    
-                    Text(
-                        text = cardBrand,
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    )
-                }
-
-                val formattedNumber = remember(cardNumber) {
-                    val formatted = java.lang.StringBuilder()
-                    val clean = cardNumber.replace(" ", "").take(16)
-                    for (i in clean.indices) {
-                        formatted.append(clean[i])
-                        if ((i + 1) % 4 == 0 && i < clean.length - 1) {
-                            formatted.append("  ")
-                        }
-                    }
-                    formatted.toString().ifEmpty { "••••  ••••  ••••  ••••" }
-                }
-
-                Text(
-                    text = formattedNumber,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        color = Color.White,
-                        letterSpacing = 2.sp
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "CARDHOLDER",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White.copy(alpha = 0.5f),
-                                fontSize = 8.sp
-                            )
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = cardHolder.uppercase().ifEmpty { "YOUR NAME" },
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "EXPIRES",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White.copy(alpha = 0.5f),
-                                fontSize = 8.sp
-                            )
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = cardExpiry.ifEmpty { "MM/YY" },
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun PlatformSelectorCard(selected: PlatformType, onClick: () -> Unit) {

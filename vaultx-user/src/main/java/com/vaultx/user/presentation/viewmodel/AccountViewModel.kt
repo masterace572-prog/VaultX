@@ -153,6 +153,11 @@ class AccountViewModel @Inject constructor(
                 return
             }
         } else if (entryType == EntryType.GAME) {
+            if (_formUsername.value.isBlank()) {
+                _uiState.value = AccountUiState.Error("Username or email is required")
+                onResult(false, "Username or email is required")
+                return
+            }
             if (_formPassword.value.isBlank()) {
                 _uiState.value = AccountUiState.Error("Password cannot be empty")
                 onResult(false, "Password cannot be empty")

@@ -77,6 +77,8 @@ class PremiumViewModel @Inject constructor(
                         premiumExpiryMs = expiry
                     )
                 }
+            }.onFailure { e ->
+                android.util.Log.e("PremiumViewModel", "Failed to load plans and tier", e)
             }
             _isLoading.value = false
         }

@@ -50,7 +50,15 @@ class VaultLockViewModel @Inject constructor(
             if (result.isSuccess) {
                 _uiState.value = VaultLockUiState.Success
             } else {
-                _uiState.value = VaultLockUiState.Error("Incorrect master password")
+                val exception = result.exceptionOrNull()
+                val message = if (exception?.message?.contains("decryption", ignoreCase = true) == true ||
+                    exception?.message?.contains("crypto", ignoreCase = true) == true ||
+                    exception is javax.crypto.AEADBadTagException) {
+                    "Incorrect master password"
+                } else {
+                    exception?.localizedMessage ?: "Incorrect master password"
+                }
+                _uiState.value = VaultLockUiState.Error(message)
             }
         }
     }
@@ -62,7 +70,15 @@ class VaultLockViewModel @Inject constructor(
             if (result.isSuccess) {
                 _uiState.value = VaultLockUiState.Success
             } else {
-                _uiState.value = VaultLockUiState.Error("Incorrect PIN")
+                val exception = result.exceptionOrNull()
+                val message = if (exception?.message?.contains("decryption", ignoreCase = true) == true ||
+                    exception?.message?.contains("crypto", ignoreCase = true) == true ||
+                    exception is javax.crypto.AEADBadTagException) {
+                    "Incorrect PIN"
+                } else {
+                    exception?.localizedMessage ?: "Incorrect PIN"
+                }
+                _uiState.value = VaultLockUiState.Error(message)
             }
         }
     }

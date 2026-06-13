@@ -93,24 +93,29 @@ class CryptoManager @Inject constructor() {
      * Returns [EncryptedData] containing Base64-encoded ciphertext and IV.
      */
     fun encrypt(plaintext: String, key: SecretKey): EncryptedData {
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        var cipherBytes: ByteArray
-        var finalIv: ByteArray
         try {
-            val iv = ByteArray(GCM_IV_LENGTH).also { SecureRandom().nextBytes(it) }
-            cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_LENGTH, iv))
-            cipherBytes = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
-            finalIv = iv
-        } catch (e: java.security.InvalidAlgorithmParameterException) {
-            // Android Keystore key throws Caller-provided IV not permitted
-            cipher.init(Cipher.ENCRYPT_MODE, key)
-            finalIv = cipher.iv
-            cipherBytes = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            var cipherBytes: ByteArray
+            var finalIv: ByteArray
+            try {
+                val iv = ByteArray(GCM_IV_LENGTH).also { SecureRandom().nextBytes(it) }
+                cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_LENGTH, iv))
+                cipherBytes = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
+                finalIv = iv
+            } catch (e: java.security.InvalidAlgorithmParameterException) {
+                // Android Keystore key throws Caller-provided IV not permitted
+                cipher.init(Cipher.ENCRYPT_MODE, key)
+                finalIv = cipher.iv
+                cipherBytes = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
+            }
+            return EncryptedData(
+                ciphertext = Base64.encodeToString(cipherBytes, Base64.NO_WRAP),
+                iv         = Base64.encodeToString(finalIv, Base64.NO_WRAP)
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("CryptoManager", "Encryption failed", e)
+            throw java.security.GeneralSecurityException("Encryption failed: ${e.localizedMessage}", e)
         }
-        return EncryptedData(
-            ciphertext = Base64.encodeToString(cipherBytes, Base64.NO_WRAP),
-            iv         = Base64.encodeToString(finalIv, Base64.NO_WRAP)
-        )
     }
 
     // ── AES-256-GCM Decrypt ───────────────────────────────────────────────────
@@ -120,12 +125,17 @@ class CryptoManager @Inject constructor() {
      * Returns plaintext String or throws [SecurityException] if tampered.
      */
     fun decrypt(encryptedData: EncryptedData, key: SecretKey): String {
-        val iv         = Base64.decode(encryptedData.iv, Base64.NO_WRAP)
-        val ciphertext = Base64.decode(encryptedData.ciphertext, Base64.NO_WRAP)
-        val cipher = Cipher.getInstance(TRANSFORMATION).apply {
-            init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_LENGTH, iv))
+        try {
+            val iv         = Base64.decode(encryptedData.iv, Base64.NO_WRAP)
+            val ciphertext = Base64.decode(encryptedData.ciphertext, Base64.NO_WRAP)
+            val cipher = Cipher.getInstance(TRANSFORMATION).apply {
+                init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_LENGTH, iv))
+            }
+            return String(cipher.doFinal(ciphertext), Charsets.UTF_8)
+        } catch (e: Exception) {
+            android.util.Log.e("CryptoManager", "Decryption failed", e)
+            throw java.security.GeneralSecurityException("Decryption failed: ${e.localizedMessage}", e)
         }
-        return String(cipher.doFinal(ciphertext), Charsets.UTF_8)
     }
 
     // ── Android Keystore — Biometric-protected key for DB passphrase ──────────

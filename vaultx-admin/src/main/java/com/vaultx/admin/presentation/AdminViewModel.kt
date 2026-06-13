@@ -48,6 +48,9 @@ class AdminViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _errorState = MutableStateFlow<String?>(null)
+    val errorState: StateFlow<String?> = _errorState.asStateFlow()
+
     val isDarkMode: StateFlow<Boolean?> = themePreferences.isDarkMode
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, null)
 
@@ -75,6 +78,7 @@ class AdminViewModel @Inject constructor(
     fun loadData() {
         viewModelScope.launch {
             _isLoading.value = true
+            _errorState.value = null
             try {
                 // Load Users
                 val usersSnapshot = firestore.collection("users")
@@ -163,6 +167,7 @@ class AdminViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                _errorState.value = "Failed to load data: ${e.localizedMessage}"
             } finally {
                 _isLoading.value = false
             }

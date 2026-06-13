@@ -202,108 +202,7 @@ fun EditAccountScreen(
                         )
                     }
 
-                    EntryType.CARD -> {
-                        CardPreview(
-                            cardNumber = cardNumber,
-                            cardHolder = cardHolder,
-                            cardExpiry = cardExpiry
-                        )
 
-                        Spacer(Modifier.height(4.dp))
-
-                        VaultTextField(
-                            value         = platformLabel,
-                            onValueChange = viewModel::onPlatformLabelChanged,
-                            label         = "Card Label *",
-                            placeholder   = "e.g. Personal Visa",
-                            leadingIcon   = Icons.Outlined.Label,
-                            isError       = uiState is AccountUiState.Error && platformLabel.isBlank(),
-                            errorMessage  = "Card label is required"
-                        )
-
-                        VaultTextField(
-                            value         = cardHolder,
-                            onValueChange = viewModel::onCardHolderChanged,
-                            label         = "Cardholder Name",
-                            placeholder   = "JOHN DOE",
-                            leadingIcon   = Icons.Outlined.Person
-                        )
-
-                        VaultTextField(
-                            value         = cardNumber,
-                            onValueChange = { val clean = it.filter { c -> c.isDigit() }.take(16); viewModel.onCardNumberChanged(clean) },
-                            label         = "Card Number *",
-                            placeholder   = "0000 0000 0000 0000",
-                            leadingIcon   = Icons.Outlined.CreditCard,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            isError       = uiState is AccountUiState.Error && cardNumber.isBlank(),
-                            errorMessage  = "Card number is required"
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            VaultTextField(
-                                value         = cardExpiry,
-                                onValueChange = {
-                                    var clean = it.replace("/", "").filter { c -> c.isDigit() }.take(4)
-                                    if (clean.length > 2) {
-                                        clean = clean.substring(0, 2) + "/" + clean.substring(2)
-                                    }
-                                    viewModel.onCardExpiryChanged(clean)
-                                },
-                                label         = "Expiry (MM/YY)",
-                                placeholder   = "MM/YY",
-                                leadingIcon   = Icons.Outlined.CalendarToday,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier      = Modifier.weight(1f)
-                            )
-
-                            VaultTextField(
-                                value         = cardCvv,
-                                onValueChange = { viewModel.onCardCvvChanged(it.filter { c -> c.isDigit() }.take(4)) },
-                                label         = "CVV",
-                                placeholder   = "000",
-                                leadingIcon   = Icons.Outlined.Pin,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier      = Modifier.weight(1f)
-                            )
-                        }
-
-                        VaultTextField(
-                            value         = cardPin,
-                            onValueChange = { viewModel.onCardPinChanged(it.filter { c -> c.isDigit() }.take(6)) },
-                            label         = "Card PIN (optional)",
-                            placeholder   = "0000",
-                            leadingIcon   = Icons.Outlined.Lock,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                    }
-
-                    EntryType.NOTE -> {
-                        VaultTextField(
-                            value         = platformLabel,
-                            onValueChange = viewModel::onPlatformLabelChanged,
-                            label         = "Note Title *",
-                            placeholder   = "e.g. WiFi Password, Lockbox Code",
-                            leadingIcon   = Icons.Outlined.Label,
-                            isError       = uiState is AccountUiState.Error && platformLabel.isBlank(),
-                            errorMessage  = "Note title is required"
-                        )
-
-                        VaultTextField(
-                            value         = noteContent,
-                            onValueChange = viewModel::onNoteContentChanged,
-                            label         = "Note Content *",
-                            placeholder   = "Type your secure note here...",
-                            leadingIcon   = Icons.Outlined.Description,
-                            singleLine    = false,
-                            maxLines      = 10,
-                            isError       = uiState is AccountUiState.Error && noteContent.isBlank(),
-                            errorMessage  = "Note content is required"
-                        )
-                    }
 
                     EntryType.GAME -> {
                         VaultTextField(
@@ -335,6 +234,16 @@ fun EditAccountScreen(
                         )
 
                         VaultTextField(
+                            value         = username,
+                            onValueChange = viewModel::onUsernameChanged,
+                            label         = "Username or Email *",
+                            placeholder   = "you@example.com or @username",
+                            leadingIcon   = Icons.Outlined.Person,
+                            isError       = uiState is AccountUiState.Error && username.isBlank(),
+                            errorMessage  = "Username or email is required"
+                        )
+
+                        VaultTextField(
                             value         = password,
                             onValueChange = viewModel::onPasswordChanged,
                             label         = "Password *",
@@ -358,6 +267,7 @@ fun EditAccountScreen(
                             leadingIcon   = Icons.Outlined.Description
                         )
                     }
+                    else -> {}
                 }
             }
 
@@ -372,7 +282,7 @@ fun EditAccountScreen(
                 EntryType.LOGIN -> username.isNotEmpty() && password.isNotEmpty()
                 EntryType.CARD -> platformLabel.isNotEmpty() && cardNumber.isNotEmpty()
                 EntryType.NOTE -> platformLabel.isNotEmpty() && noteContent.isNotEmpty()
-                EntryType.GAME -> platformLabel.isNotEmpty() && gameName.isNotEmpty() && password.isNotEmpty()
+                EntryType.GAME -> platformLabel.isNotEmpty() && gameName.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty()
             }
 
             VaultButton(
