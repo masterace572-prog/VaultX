@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VaultX</string>
+    <string name="biometric_title">Unlock VaultX</string>
+    <string name="biometric_subtitle">Use your biometric to access your vault</string>
+    <string name="biometric_negative">Use Master Password</string>
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash screen icon for VaultX — a simple lock shape -->
+<!-- Replace this with your actual high-resolution branded icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background circle -->
+    <path
+        android:fillColor="#7A7AFF"
+        android:pathData="M54,54m-54,0a54,54 0,1 1,108 0a54,54 0,1 1,-108 0" />
+    <!-- Lock body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,50 L38,68 Q38,72 42,72 L66,72 Q70,72 70,68 L70,50 Q70,46 66,46 L42,46 Q38,46 38,50 Z" />
+    <!-- Lock shackle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:fillAlpha="0"
+        android:pathData="M44,46 L44,38 Q44,28 54,28 Q64,28 64,38 L64,46" />
+    <!-- Keyhole -->
+    <path
+        android:fillColor="#7A7AFF"
+        android:pathData="M54,54m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#7A7AFF"
+        android:pathData="M52,58 L56,58 L57,66 L51,66 Z" />
+</vector>

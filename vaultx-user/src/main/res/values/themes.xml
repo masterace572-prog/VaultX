@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme — minimal, overridden entirely by Compose -->
+    <style name="Theme.VaultX" parent="Theme.SplashScreen">
+        <!-- Splash screen background color -->
+        <item name="windowSplashScreenBackground">#0E0E10</item>
+        <!-- Splash icon (set in your mipmap) -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_vault_splash</item>
+        <!-- Transition to the Compose theme -->
+        <item name="postSplashScreenTheme">@style/Theme.VaultX.NoActionBar</item>
+    </style>
+
+    <style name="Theme.VaultX.NoActionBar" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">#0E0E10</item>
+        <item name="android:navigationBarColor">#0E0E10</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

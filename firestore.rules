@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Helper functions
+    // ─────────────────────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             (request.auth.token.email == 'saabarjun705@gmail.com' ||
+              exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() &&
+             (request.auth.token.email == 'saabarjun705@gmail.com' ||
+              (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+               get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'superadmin'));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // users/{uid}
+    // ─────────────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid)
+                    // Prevent user from self-granting premium
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['tier', 'premium_expiry']);
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['tier', 'premium_expiry']);
+      allow delete: if false; // Never delete via client
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // vaults/{uid}/entries/{entryId}
+    //
+    // ZERO-KNOWLEDGE ENFORCEMENT:
+    // • Admin CANNOT read vault entries (only users can).
+    // • The encrypted_blob field is always opaque ciphertext — Firestore
+    //   rules cannot inspect its contents.
+    // ─────────────────────────────────────────────────────────────────────
+    match /vaults/{uid}/entries/{entryId} {
+      allow read, write: if isOwner(uid);
+      // Explicit deny for admins — Zero-Knowledge guarantee
+      allow read, write: if false; // Admin fallback explicitly blocked
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // payments/{paymentId}
+    // ─────────────────────────────────────────────────────────────────────
+    match /payments/{paymentId} {
+      // User can create their own payment request
+      allow create: if isAuthenticated()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.utr.size() == 12;
+      // User can read their own
+      allow read: if isAuthenticated()
+                  && resource.data.uid == request.auth.uid;
+      // Admin can read all and update status
+      allow read: if isAdmin();
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data)
+                        .affectedKeys().hasOnly(['status','reviewed_at','reviewed_by']);
+      allow delete: if isSuperAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // plans/{planId}
+    // ─────────────────────────────────────────────────────────────────────
+    match /plans/{planId} {
+      allow read: if isAuthenticated();          // Any user can read plans
+      allow write: if isAdmin();                 // Only admins can create/edit
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // app_config/main  (single document)
+    // ─────────────────────────────────────────────────────────────────────
+    match /app_config/main {
+      allow read: if isAuthenticated();          // All users read config
+      allow write: if isAdmin();                 // Only admins push config
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // admins/{uid}
+    // ─────────────────────────────────────────────────────────────────────
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // Default: deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

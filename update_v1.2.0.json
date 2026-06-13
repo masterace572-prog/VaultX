@@ -1,0 +1,17 @@
+{
+  "versionCode": 3,
+  "versionName": "1.2.0",
+  "downloadUrl": "",
+  "forcedUpdate": false,
+  "changelog": [
+    "🔐 Autofill Service — Securely autofill your passwords in any app or browser",
+    "🎨 Completely redesigned Admin Dashboard with unified VaultX design system",
+    "🎟️ Promo Codes — Redeem coupons for free premium plans or discounts",
+    "🛡️ Global Maintenance Mode — Instantly lock the app during maintenance windows",
+    "📦 Dedicated App Update Manager — Centralized OTA update controls",
+    "🏷️ Auto-filled platform metadata — Instagram, Twitter, Facebook, Google, Discord",
+    "📢 Inline announcements in home header for cleaner UI",
+    "🐛 Fixed autofill crash on certain devices",
+    "⚡ Performance improvements and bug fixes"
+  ]
+}

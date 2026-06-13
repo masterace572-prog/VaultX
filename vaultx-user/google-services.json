@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "604578163151",
+    "project_id": "gamevault-3dd30",
+    "storage_bucket": "gamevault-3dd30.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:604578163151:android:1c40821597a050b74d4aba",
+        "android_client_info": {
+          "package_name": "com.vaultx.admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "604578163151-atrlnckp0udokiii5fcigb03joqi73ob.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqWd-a5SHWnj9MyHOmOnEI54652qjMpc0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "604578163151-atrlnckp0udokiii5fcigb03joqi73ob.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:604578163151:android:58111053835221974d4aba",
+        "android_client_info": {
+          "package_name": "com.vaultx.user"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "604578163151-atrlnckp0udokiii5fcigb03joqi73ob.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqWd-a5SHWnj9MyHOmOnEI54652qjMpc0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "604578163151-atrlnckp0udokiii5fcigb03joqi73ob.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
