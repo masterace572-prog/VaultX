@@ -33,6 +33,7 @@ interface AccountRepository {
     suspend fun countAccounts(): Int
     suspend fun syncToCloud(): Result<Unit>
     suspend fun syncFromCloud(): Result<Unit>
+    suspend fun exportToJson(password: String, context: android.content.Context): Result<Unit>
 }
 
 interface AppConfigRepository {

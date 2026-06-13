@@ -1,6 +1,8 @@
 package com.vaultx.user.data.repository
 
+import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import com.google.firebase.firestore.FirebaseFirestore
 import com.vaultx.user.data.local.db.AccountEntryDao
 import com.vaultx.user.data.local.db.AccountEntryEntity
@@ -11,12 +13,16 @@ import com.vaultx.user.di.VaultSessionManager
 import com.vaultx.user.domain.repository.AccountRepository
 import com.vaultx.user.security.CryptoManager
 import com.vaultx.user.security.EncryptedData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.DataOutputStream
 import java.util.UUID
+import javax.crypto.Cipher
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -219,6 +225,59 @@ class AccountRepositoryImpl @Inject constructor(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
+            }
+        }
+    }
+
+    @kotlinx.serialization.Serializable
+    private data class ExportPayload(
+        val salt: String,
+        val iv: String,
+        val ciphertext: String
+    )
+
+    override suspend fun exportToJson(password: String, context: Context): Result<Unit> = runCatching {
+        withContext(Dispatchers.IO) {
+            val accounts = getAllAccountsSync()
+            val jsonString = json.encodeToString(accounts)
+            
+            val salt = cryptoManager.generateSalt()
+            val derivedKey = cryptoManager.derivePinKey(password, salt)
+            
+            val encryptedData = cryptoManager.encrypt(jsonString, derivedKey)
+            
+            val exportPayload = json.encodeToString(
+                ExportPayload(
+                    salt = cryptoManager.saltToBase64(salt),
+                    iv = encryptedData.iv,
+                    ciphertext = encryptedData.ciphertext
+                )
+            )
+            
+            val fileName = "vaultx_backup_${System.currentTimeMillis()}.json"
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                val contentValues = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/json")
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+                }
+                val uri = context.contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                if (uri != null) {
+                    context.contentResolver.openOutputStream(uri)?.use { stream ->
+                        stream.write(exportPayload.toByteArray(Charsets.UTF_8))
+                        stream.flush()
+                    } ?: throw IllegalStateException("Could not open output stream")
+                } else {
+                    throw IllegalStateException("Failed to create MediaStore entry")
+                }
+            } else {
+                val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+                if (!dir.exists()) {
+                    dir.mkdirs()
+                }
+                val file = java.io.File(dir, fileName)
+                file.writeText(exportPayload)
             }
         }
     }

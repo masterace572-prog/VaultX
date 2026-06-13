@@ -22,6 +22,7 @@ fun PaymentApprovalsScreen(
     onBack: () -> Unit,
     viewModel: AdminViewModel = hiltViewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val payments by viewModel.payments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -73,8 +74,18 @@ fun PaymentApprovalsScreen(
                         items(pendingPayments, key = { it.paymentId }) { payment ->
                             PaymentApprovalCard(
                                 payment = payment,
-                                onApprove = { viewModel.approvePayment(payment.paymentId, payment.uid, 30) },
-                                onReject = { viewModel.rejectPayment(payment.paymentId) }
+                                onApprove = { 
+                                    val plan = viewModel.plans.value.find { it.id == payment.planId }
+                                    val days = plan?.durationDays ?: 30
+                                    viewModel.approvePayment(payment.paymentId, payment.uid, days) { _, msg ->
+                                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                onReject = { 
+                                    viewModel.rejectPayment(payment.paymentId) { _, msg ->
+                                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             )
                         }
                     }

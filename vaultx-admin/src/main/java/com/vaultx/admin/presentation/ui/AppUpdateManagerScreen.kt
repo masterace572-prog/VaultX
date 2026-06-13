@@ -95,7 +95,9 @@ fun AppUpdateManagerScreen(
                         isSignupEnabled = appConfig?.isSignupEnabled ?: true,
                         maxFreeAccounts = appConfig?.maxFreeAccounts ?: 5
                     )
-                    viewModel.updateAppConfig(config)
+                    viewModel.updateAppConfig(config) { _, msg ->
+                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                    }
                     onBack()
                 },
                 containerColor = MaterialTheme.colorScheme.primary,

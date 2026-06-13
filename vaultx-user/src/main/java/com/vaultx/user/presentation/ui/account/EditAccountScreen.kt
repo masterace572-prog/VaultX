@@ -46,6 +46,7 @@ fun EditAccountScreen(
     var passVisible   by remember { mutableStateOf(false) }
 
     val isLoading = uiState is AccountUiState.Loading
+    val context   = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(entryId) { viewModel.loadAccountForEdit(entryId) }
 
@@ -147,7 +148,13 @@ fun EditAccountScreen(
 
             VaultButton(
                 text      = "Save Changes",
-                onClick   = viewModel::updateAccount,
+                onClick   = {
+                    viewModel.updateAccount { success, message ->
+                        if (message != null) {
+                            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
                 isLoading = isLoading,
                 enabled   = password.isNotEmpty()
             )

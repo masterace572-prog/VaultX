@@ -75,7 +75,7 @@ class SettingsViewModel @Inject constructor(
                 } ?: 0
                 _isPremium.value = tier == "premium" && daysLeft > 0
                 
-                val name = doc.getString("name")
+                val name = doc.getString("display_name")
                 if (!name.isNullOrBlank()) {
                     _userName.value = name
                 }
@@ -93,11 +93,17 @@ class SettingsViewModel @Inject constructor(
     fun setBiometricLock(enabled: Boolean) { 
         _biometricLockEnabled.value = enabled 
         prefs.edit().putBoolean("pref_biometric_enabled", enabled).apply()
+        if (enabled) {
+            setAppLock(false)
+        }
     }
 
     fun setAppLock(enabled: Boolean) {
         _appLockEnabled.value = enabled
         prefs.edit().putBoolean("pref_app_lock_enabled", enabled).apply()
+        if (enabled) {
+            setBiometricLock(false)
+        }
         if (!enabled) {
             // Also clear the PIN data if they turn it off
             prefs.edit().remove("pref_app_pin_salt").remove("pref_wrapped_db_key_by_pin").apply()
@@ -154,6 +160,16 @@ class SettingsViewModel @Inject constructor(
             authRepository.logout()
             vaultSession.lockVault()
             onLogout()
+        }
+    }
+
+    fun exportData(password: String, context: android.content.Context, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            val result = accountRepository.exportToJson(password, context)
+            if (result.isFailure) {
+                android.util.Log.e("VaultXExport", "Export failed", result.exceptionOrNull())
+            }
+            onResult(result.isSuccess, result.exceptionOrNull()?.message)
         }
     }
 }

@@ -28,6 +28,7 @@ fun PromoCodesScreen(
     onBack: () -> Unit,
     viewModel: AdminViewModel = hiltViewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val promoCodes by viewModel.promoCodes.collectAsState()
     val plans by viewModel.plans.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
@@ -84,7 +85,11 @@ fun PromoCodesScreen(
                             editingPromo = promo
                             showDialog = true
                         },
-                        onDelete = { viewModel.deletePromoCode(promo.id) }
+                        onDelete = { 
+                            viewModel.deletePromoCode(promo.id) { _, msg ->
+                                android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     )
                 }
             }
@@ -97,9 +102,13 @@ fun PromoCodesScreen(
                 onDismiss = { showDialog = false },
                 onSave = {
                     if (editingPromo == null) {
-                        viewModel.createPromoCode(it)
+                        viewModel.createPromoCode(it) { _, msg ->
+                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     } else {
-                        viewModel.updatePromoCode(it)
+                        viewModel.updatePromoCode(it) { _, msg ->
+                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     }
                     showDialog = false
                 }

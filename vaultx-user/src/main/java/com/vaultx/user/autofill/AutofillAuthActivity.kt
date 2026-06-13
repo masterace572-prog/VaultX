@@ -2,21 +2,34 @@ package com.vaultx.user.autofill
 
 import android.app.Activity
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.fragment.app.FragmentActivity
+import com.vaultx.user.presentation.theme.VaultXTheme
+import com.vaultx.user.presentation.ui.auth.VaultLockScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
- * Stub activity for autofill authentication flow.
- * Currently just finishes immediately — biometric gate is handled
- * at the vault-unlock level (VaultLockScreen) rather than per-autofill-request.
+ * Activity for autofill authentication flow.
+ * Hosts the VaultLockScreen to unlock the vault before autofilling.
  */
 @AndroidEntryPoint
 class AutofillAuthActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // For now, just finish. The autofill service handles everything directly.
-        setResult(Activity.RESULT_CANCELED)
-        finish()
+        setContent {
+            VaultXTheme {
+                VaultLockScreen(
+                    onUnlockSuccess = {
+                        setResult(Activity.RESULT_OK)
+                        finish()
+                    },
+                    onFallbackToLogin = {
+                        setResult(Activity.RESULT_CANCELED)
+                        finish()
+                    }
+                )
+            }
+        }
     }
 }

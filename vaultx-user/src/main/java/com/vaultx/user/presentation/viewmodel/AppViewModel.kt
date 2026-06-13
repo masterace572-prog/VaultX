@@ -66,7 +66,8 @@ class AppViewModel @Inject constructor(
                     _authState.value = AuthState.Authenticated
                 } else {
                     val isAppLockEnabled = encryptedPrefs.getBoolean("pref_app_lock_enabled", false)
-                    if (isAppLockEnabled) {
+                    val isBiometricEnabled = encryptedPrefs.getBoolean("pref_biometric_enabled", false)
+                    if (isAppLockEnabled || isBiometricEnabled) {
                         _authState.value = AuthState.NeedsVaultUnlock
                     } else {
                         try {

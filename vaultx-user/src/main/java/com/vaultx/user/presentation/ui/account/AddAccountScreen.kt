@@ -45,6 +45,7 @@ fun AddAccountScreen(
     val isLoading = uiState is AccountUiState.Loading
     var passVisible       by remember { mutableStateOf(false) }
     var showPlatformSheet by remember { mutableStateOf(false) }
+    val context           = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(uiState) {
         if (uiState is AccountUiState.Success) {
@@ -188,7 +189,13 @@ fun AddAccountScreen(
             // ── Save button ───────────────────────────────────────────────────
             VaultButton(
                 text      = "Save Account",
-                onClick   = viewModel::saveAccount,
+                onClick   = {
+                    viewModel.saveAccount { success, message ->
+                        if (message != null) {
+                            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
                 isLoading = isLoading,
                 enabled   = password.isNotEmpty() && (
                     if (isGame) platformLabel.isNotEmpty() && gameName.isNotEmpty()

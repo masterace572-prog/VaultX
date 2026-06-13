@@ -114,37 +114,44 @@ class AccountViewModel @Inject constructor(
 
     // ── CRUD operations ───────────────────────────────────────────────────────
 
-    fun saveAccount() {
+    fun saveAccount(onResult: (Boolean, String?) -> Unit) {
         if (_formPassword.value.isBlank()) {
             _uiState.value = AccountUiState.Error("Password cannot be empty")
+            onResult(false, "Password cannot be empty")
             return
         }
         if (!_formIsGame.value && _formUsername.value.isBlank()) {
             _uiState.value = AccountUiState.Error("Username or email is required")
+            onResult(false, "Username or email is required")
             return
         }
         if (_formIsGame.value && _formGameName.value.isBlank()) {
             _uiState.value = AccountUiState.Error("Game name is required")
+            onResult(false, "Game name is required")
             return
         }
         if (_formIsGame.value && _formPlatformLabel.value.isBlank()) {
             _uiState.value = AccountUiState.Error("Account label / nickname is required")
+            onResult(false, "Account label / nickname is required")
             return
         }
         viewModelScope.launch {
             _uiState.value = AccountUiState.Loading
             val entry = buildAccountEntry()
             val result = accountRepository.saveAccount(entry)
-            _uiState.value = if (result.isSuccess) {
+            if (result.isSuccess) {
                 refreshCount()
-                AccountUiState.Success
+                _uiState.value = AccountUiState.Success
+                onResult(true, "Account saved successfully")
             } else {
-                AccountUiState.Error(result.exceptionOrNull()?.message ?: "Failed to save")
+                val msg = result.exceptionOrNull()?.message ?: "Failed to save"
+                _uiState.value = AccountUiState.Error(msg)
+                onResult(false, msg)
             }
         }
     }
 
-    fun updateAccount() {
+    fun updateAccount(onResult: (Boolean, String?) -> Unit) {
         val current = _selectedAccount.value ?: return
         viewModelScope.launch {
             _uiState.value = AccountUiState.Loading
@@ -153,8 +160,14 @@ class AccountViewModel @Inject constructor(
                 createdAt = current.createdAt
             )
             val result = accountRepository.updateAccount(updated)
-            _uiState.value = if (result.isSuccess) AccountUiState.Success
-                             else AccountUiState.Error(result.exceptionOrNull()?.message ?: "Failed to update")
+            if (result.isSuccess) {
+                _uiState.value = AccountUiState.Success
+                onResult(true, "Account updated successfully")
+            } else {
+                val msg = result.exceptionOrNull()?.message ?: "Failed to update"
+                _uiState.value = AccountUiState.Error(msg)
+                onResult(false, msg)
+            }
         }
     }
 

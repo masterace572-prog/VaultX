@@ -17,6 +17,7 @@ import com.vaultx.user.presentation.ui.account.EditAccountScreen
 import com.vaultx.user.presentation.ui.settings.SettingsScreen
 import com.vaultx.user.presentation.ui.settings.AppLockSetupScreen
 import com.vaultx.user.presentation.ui.settings.EditProfileScreen
+import com.vaultx.user.presentation.ui.settings.HelpSupportScreen
 import com.vaultx.user.presentation.ui.premium.PremiumScreen
 import com.vaultx.user.presentation.ui.premium.PaymentScreen
 import com.vaultx.user.presentation.viewmodel.AppViewModel
@@ -168,7 +169,8 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
                 },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateToAppLockSetup = { navController.navigate(Screen.AppLockSetup.route) },
-                onNavigateToPremium = { navController.navigate(Screen.Premium.route) }
+                onNavigateToPremium = { navController.navigate(Screen.Premium.route) },
+                onNavigateToHelpSupport = { navController.navigate(Screen.HelpSupport.route) }
             )
         }
 
@@ -180,6 +182,12 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
 
         composable(route = Screen.Profile.route) {
             EditProfileScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.HelpSupport.route) {
+            HelpSupportScreen(
                 onBack = { navController.popBackStack() }
             )
         }

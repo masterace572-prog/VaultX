@@ -26,6 +26,7 @@ sealed class Screen(val route: String) {
     object Settings      : Screen("settings")
     object Profile       : Screen("profile")
     object AppLockSetup  : Screen("app_lock_setup")
+    object HelpSupport   : Screen("help_support")
 
     // ── Payment / Premium ─────────────────────────────────────────────────────
     object Premium       : Screen("premium")

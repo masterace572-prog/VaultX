@@ -1,5 +1,7 @@
 package com.vaultx.user.presentation.ui.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -35,6 +37,7 @@ fun SettingsScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToAppLockSetup: () -> Unit,
     onNavigateToPremium: () -> Unit,
+    onNavigateToHelpSupport: () -> Unit,
     appViewModel:    AppViewModel    = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -58,7 +61,9 @@ fun SettingsScreen(
     }
 
     var showLogoutDialog by remember { mutableStateOf(false) }
-
+    var showExportDialog by remember { mutableStateOf(false) }
+    var exportPassword by remember { mutableStateOf("") }
+    
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -120,7 +125,10 @@ fun SettingsScreen(
                     },
                     checked  = biometricLockEnabled,
                     enabled  = biometricAvailability == BiometricAvailability.AVAILABLE,
-                    onToggle = { settingsViewModel.setBiometricLock(it) }
+                    onToggle = { 
+                        settingsViewModel.setBiometricLock(it)
+                        android.widget.Toast.makeText(context, "Please restart the app to apply changes", android.widget.Toast.LENGTH_SHORT).show()
+                    }
                 )
                 VaultDivider()
                 SettingsToggleRow(
@@ -133,6 +141,7 @@ fun SettingsScreen(
                             onNavigateToAppLockSetup()
                         } else {
                             settingsViewModel.setAppLock(false)
+                            android.widget.Toast.makeText(context, "Please restart the app to apply changes", android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }
                 )
@@ -212,7 +221,10 @@ fun SettingsScreen(
                     icon     = Icons.Outlined.Download,
                     title    = "Export Vault Data",
                     subtitle = "Export your local accounts to an encrypted file",
-                    onClick  = { /* Handle export */ }
+                    onClick  = {
+                        exportPassword = java.util.UUID.randomUUID().toString().substring(0, 12)
+                        showExportDialog = true
+                    }
                 )
             }
 
@@ -275,7 +287,7 @@ fun SettingsScreen(
                     icon     = Icons.Outlined.HelpOutline,
                     title    = "Help & Support",
                     subtitle = "Contact us or read FAQs",
-                    onClick  = { /* Open support link */ }
+                    onClick  = onNavigateToHelpSupport
                 )
             }
 
@@ -309,6 +321,64 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) { Text("Cancel") }
+            },
+            shape          = ShapeCard,
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
+    if (showExportDialog) {
+        val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                settingsViewModel.exportData(exportPassword, context) { success, error ->
+                    if (success) {
+                        android.widget.Toast.makeText(context, "Export successful! File saved in Downloads.", android.widget.Toast.LENGTH_LONG).show()
+                        showExportDialog = false
+                    } else {
+                        android.widget.Toast.makeText(context, "Export failed: ${error ?: "Unknown"}", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+            } else {
+                android.widget.Toast.makeText(context, "Permission denied. Required to save to Downloads.", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            icon  = { Icon(Icons.Outlined.Download, null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Export Vault") },
+            text  = {
+                Column {
+                    Text("Your vault will be exported as an encrypted JSON file to your Downloads folder.")
+                    Spacer(Modifier.height(16.dp))
+                    VaultTextField(
+                        value = exportPassword,
+                        onValueChange = { exportPassword = it },
+                        label = "Decryption Password"
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Save this password! You will need it to import the vault later.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                            settingsViewModel.exportData(exportPassword, context) { success, error ->
+                                if (success) {
+                                    android.widget.Toast.makeText(context, "Export successful! File saved in Downloads.", android.widget.Toast.LENGTH_LONG).show()
+                                    showExportDialog = false
+                                } else {
+                                    android.widget.Toast.makeText(context, "Export failed: ${error ?: "Unknown"}", android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        } else {
+                            permissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        }
+                    }
+                ) { Text("Export") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExportDialog = false }) { Text("Cancel") }
             },
             shape          = ShapeCard,
             containerColor = MaterialTheme.colorScheme.surface

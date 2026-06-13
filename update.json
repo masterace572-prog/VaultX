@@ -1,10 +1,14 @@
 {
-  "versionCode": 6,
-  "versionName": "2.1.0",
-  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.1.0/VaultX-User-v2.1.0.apk",
+  "versionCode": 7,
+  "versionName": "2.2.0",
+  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.2.0/VaultX-User-v2.2.0.apk",
   "changelog": [
-    "Fixed cloud sync restore logic",
-    "Previously synced entries are now downloaded properly when you enable Cloud Sync after a reinstall"
+    "Fixed app UI bugs and added Toasts",
+    "Admin UI completely overhauled",
+    "Added automated direct Export to Downloads",
+    "Added new Help & Support screen",
+    "Fixed biometric lock logic",
+    "Fixed display name in signup"
   ],
   "forcedUpdate": false
 }

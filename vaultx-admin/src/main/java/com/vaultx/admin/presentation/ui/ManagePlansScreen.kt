@@ -24,6 +24,7 @@ fun ManagePlansScreen(
     onBack: () -> Unit,
     viewModel: AdminViewModel = hiltViewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val plans by viewModel.plans.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var editingPlan by remember { mutableStateOf<Plan?>(null) }
@@ -81,7 +82,11 @@ fun ManagePlansScreen(
                     PlanCard(
                         plan = plan,
                         onEdit = { editingPlan = plan; showDialog = true },
-                        onDelete = { viewModel.deletePlan(plan.id) }
+                        onDelete = { 
+                            viewModel.deletePlan(plan.id) { _, msg ->
+                                android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     )
                 }
             }
@@ -94,8 +99,15 @@ fun ManagePlansScreen(
             plan = editingPlan,
             onDismiss = { showDialog = false },
             onSave = { savedPlan ->
-                if (editingPlan == null) viewModel.createPlan(savedPlan)
-                else viewModel.updatePlan(savedPlan)
+                if (editingPlan == null) {
+                    viewModel.createPlan(savedPlan) { _, msg ->
+                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    viewModel.updatePlan(savedPlan) { _, msg ->
+                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
                 showDialog = false
             }
         )

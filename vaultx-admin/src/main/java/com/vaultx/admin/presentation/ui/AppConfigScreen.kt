@@ -29,6 +29,7 @@ fun AppConfigScreen(
     onBack: () -> Unit,
     viewModel: AdminViewModel = hiltViewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val appConfig by viewModel.appConfig.collectAsState()
 
     var announcement by remember(appConfig) { mutableStateOf(appConfig?.announcement ?: "") }
@@ -48,7 +49,7 @@ fun AppConfigScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = {
                     val config = AppConfig(
                         latestVersionCode = appConfig?.latestVersionCode ?: 1,
@@ -70,14 +71,16 @@ fun AppConfigScreen(
                         discordLink = discordLink,
                         updateDialogMessage = updateDialogMessage
                     )
-                    viewModel.updateAppConfig(config)
-                    onBack()
+                    viewModel.updateAppConfig(config) { success, msg ->
+                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                        if (success) onBack()
+                    }
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Outlined.Save, contentDescription = "Save")
-            }
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                icon = { Icon(Icons.Outlined.Save, contentDescription = null) },
+                text = { Text("Save Config") }
+            )
         }
     ) { padding ->
         Column(

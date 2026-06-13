@@ -9,7 +9,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.vaultx.admin.presentation.ui.AdminDashboardScreen
 import com.vaultx.admin.presentation.ui.AppConfigScreen
-import com.vaultx.admin.presentation.ui.ManageUsersScreen
 import com.vaultx.admin.presentation.ui.PaymentApprovalsScreen
 import com.vaultx.admin.presentation.ui.AdminAuthScreen
 import com.vaultx.admin.presentation.ui.ManagePlansScreen
@@ -55,18 +54,11 @@ fun AdminNavGraph(navController: NavHostController = rememberNavController()) {
 
         composable(route = Screen.Dashboard.route) {
             AdminDashboardScreen(
-                onNavigateToUsers = { navController.navigate(Screen.ManageUsers.route) },
                 onNavigateToPayments = { navController.navigate(Screen.PaymentApprovals.route) },
                 onNavigateToConfig = { navController.navigate(Screen.AppConfig.route) },
                 onNavigateToUpdates = { navController.navigate("app_update") },
                 onNavigateToPlans = { navController.navigate(Screen.ManagePlans.route) },
                 onNavigateToPromoCodes = { navController.navigate("promo_codes") }
-            )
-        }
-
-        composable(route = Screen.ManageUsers.route) {
-            ManageUsersScreen(
-                onBack = { navController.popBackStack() }
             )
         }
 

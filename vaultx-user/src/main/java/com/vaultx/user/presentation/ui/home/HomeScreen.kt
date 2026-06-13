@@ -241,6 +241,24 @@ private fun WelcomeHeader(
     daysLeft:       Int?,
     onPremiumClick: () -> Unit
 ) {
+    var showPlanDialog by remember { mutableStateOf(false) }
+
+    if (showPlanDialog) {
+        AlertDialog(
+            onDismissRequest = { showPlanDialog = false },
+            title = { Text("Plan Details") },
+            text = { Text("Active plan: ${if (isPremium) "Premium" else "Free"}\nDays left: ${daysLeft ?: 0}") },
+            confirmButton = {
+                TextButton(onClick = { showPlanDialog = false }) { Text("OK") }
+            },
+            dismissButton = {
+                if (!isPremium) {
+                    TextButton(onClick = { showPlanDialog = false; onPremiumClick() }) { Text("Upgrade") }
+                }
+            }
+        )
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text     = title,
@@ -258,11 +276,13 @@ private fun WelcomeHeader(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            TierBadge(
-                isPremium  = isPremium,
-                daysLeft   = daysLeft,
-                modifier   = if (!isPremium) Modifier.clickableNoRipple(onPremiumClick) else Modifier
-            )
+            if (title != "Announcement") {
+                TierBadge(
+                    isPremium  = isPremium,
+                    daysLeft   = daysLeft,
+                    modifier   = Modifier.clickableNoRipple { showPlanDialog = true }
+                )
+            }
         }
     }
 }

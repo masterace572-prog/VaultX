@@ -79,8 +79,14 @@ class AuthRepositoryImpl @Inject constructor(
     ): Result<Unit> = runCatching {
         // 1. Create Firebase user
         firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-        val uid = firebaseAuth.currentUser?.uid
+        val user = firebaseAuth.currentUser
             ?: throw IllegalStateException("UID null after registration")
+        val uid = user.uid
+
+        val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+            .setDisplayName(displayName)
+            .build()
+        user.updateProfile(profileUpdates).await()
 
         // 2. Generate new salt for this user
         val salt = cryptoManager.generateSalt()

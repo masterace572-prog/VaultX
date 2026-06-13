@@ -193,7 +193,7 @@ class PaymentViewModel @Inject constructor(
         }
     }
 
-    fun submitPayment(planId: String) {
+    fun submitPayment(planId: String, onResult: (Boolean, String?) -> Unit) {
         val promo = _appliedPromo.value
         if (promo?.freePlanId == planId) {
             // It's a 100% free plan promo code! Grant premium instantly.
@@ -218,15 +218,21 @@ class PaymentViewModel @Inject constructor(
                     ).await()
 
                     _uiState.value = PaymentUiState.Submitted
+                    onResult(true, "Promo applied! You are now premium.")
                 }.onFailure { e ->
-                    _uiState.value = PaymentUiState.Error(e.message ?: "Failed to apply free promo code")
+                    val msg = e.message ?: "Failed to apply free promo code"
+                    _uiState.value = PaymentUiState.Error(msg)
+                    onResult(false, msg)
                 }
             }
             return
         }
 
         val utrValue = _utr.value
-        if (utrValue.length != 12) return
+        if (utrValue.length != 12) {
+            onResult(false, "Invalid UTR")
+            return
+        }
 
         viewModelScope.launch {
             _uiState.value = PaymentUiState.Loading
@@ -246,8 +252,11 @@ class PaymentViewModel @Inject constructor(
                 )
                 firestore.collection("payments").document(paymentId).set(paymentDoc).await()
                 _uiState.value = PaymentUiState.Submitted
+                onResult(true, "Payment request submitted successfully")
             }.onFailure { e ->
-                _uiState.value = PaymentUiState.Error(e.message ?: "Failed to submit payment")
+                val msg = e.message ?: "Failed to submit payment"
+                _uiState.value = PaymentUiState.Error(msg)
+                onResult(false, msg)
             }
         }
     }

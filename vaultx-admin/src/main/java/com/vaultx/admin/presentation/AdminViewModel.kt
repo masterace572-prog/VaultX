@@ -173,7 +173,7 @@ class AdminViewModel @Inject constructor(
     }
 
     // Admin Actions
-    fun approvePayment(paymentId: String, uid: String, planDays: Int) {
+    fun approvePayment(paymentId: String, uid: String, planDays: Int, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 val newExpiry = System.currentTimeMillis() + (planDays * 86_400_000L)
@@ -187,19 +187,21 @@ class AdminViewModel @Inject constructor(
                     ))
                     // Update User
                     val userRef = firestore.collection("users").document(uid)
-                    batch.update(userRef, mapOf(
+                    batch.set(userRef, mapOf(
                         "tier" to "premium",
                         "premium_expiry" to newExpiry
-                    ))
+                    ), com.google.firebase.firestore.SetOptions.merge())
                 }.await()
                 loadData()
+                onResult(true, "Payment approved successfully")
             } catch (e: Exception) {
                 e.printStackTrace()
+                onResult(false, e.message)
             }
         }
     }
 
-    fun rejectPayment(paymentId: String) {
+    fun rejectPayment(paymentId: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 firestore.collection("payments").document(paymentId).update(mapOf(
@@ -208,13 +210,15 @@ class AdminViewModel @Inject constructor(
                     "reviewed_by" to "admin"
                 )).await()
                 loadData()
+                onResult(true, "Payment rejected successfully")
             } catch (e: Exception) {
                 e.printStackTrace()
+                onResult(false, e.message)
             }
         }
     }
 
-    fun updateAppConfig(config: AppConfig) {
+    fun updateAppConfig(config: AppConfig, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 firestore.collection("app_config").document("main").set(mapOf(
@@ -239,13 +243,15 @@ class AdminViewModel @Inject constructor(
                     "updated_at" to com.google.firebase.Timestamp.now()
                 )).await()
                 loadData()
+                onResult(true, "App config updated successfully")
             } catch (e: Exception) {
                 e.printStackTrace()
+                onResult(false, e.message)
             }
         }
     }
 
-    fun grantManualPremium(uid: String, days: Int) {
+    fun grantManualPremium(uid: String, days: Int, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 val newExpiry = System.currentTimeMillis() + (days * 86_400_000L)
@@ -254,13 +260,15 @@ class AdminViewModel @Inject constructor(
                     "premium_expiry" to newExpiry
                 )).await()
                 loadData()
+                onResult(true, "Premium granted successfully")
             } catch (e: Exception) {
                 e.printStackTrace()
+                onResult(false, e.message)
             }
         }
     }
 
-    fun revokePremium(uid: String) {
+    fun revokePremium(uid: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 firestore.collection("users").document(uid).update(mapOf(
@@ -268,8 +276,10 @@ class AdminViewModel @Inject constructor(
                     "premium_expiry" to null
                 )).await()
                 loadData()
+                onResult(true, "Premium revoked successfully")
             } catch (e: Exception) {
                 e.printStackTrace()
+                onResult(false, e.message)
             }
         }
     }
@@ -281,7 +291,7 @@ class AdminViewModel @Inject constructor(
     }
 
     // Plan Management
-    fun createPlan(plan: Plan) {
+    fun createPlan(plan: Plan, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 firestore.collection("plans").add(mapOf(
@@ -295,12 +305,19 @@ class AdminViewModel @Inject constructor(
                     "orderIndex" to plan.orderIndex
                 )).await()
                 loadData()
-            } catch (e: Exception) { e.printStackTrace() }
+                onResult(true, "Plan created successfully")
+            } catch (e: Exception) { 
+                e.printStackTrace()
+                onResult(false, e.message)
+            }
         }
     }
 
-    fun updatePlan(plan: Plan) {
-        if (plan.id.isBlank()) return
+    fun updatePlan(plan: Plan, onResult: (Boolean, String?) -> Unit) {
+        if (plan.id.isBlank()) {
+            onResult(false, "Plan ID is blank")
+            return
+        }
         viewModelScope.launch {
             try {
                 firestore.collection("plans").document(plan.id).set(mapOf(
@@ -314,23 +331,34 @@ class AdminViewModel @Inject constructor(
                     "orderIndex" to plan.orderIndex
                 )).await()
                 loadData()
-            } catch (e: Exception) { e.printStackTrace() }
+                onResult(true, "Plan updated successfully")
+            } catch (e: Exception) { 
+                e.printStackTrace()
+                onResult(false, e.message)
+            }
         }
     }
 
-    fun deletePlan(planId: String) {
+    fun deletePlan(planId: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 firestore.collection("plans").document(planId).delete().await()
                 loadData()
-            } catch (e: Exception) { e.printStackTrace() }
+                onResult(true, "Plan deleted successfully")
+            } catch (e: Exception) { 
+                e.printStackTrace()
+                onResult(false, e.message)
+            }
         }
     }
 
     // Promo Code Management
-    fun createPromoCode(promo: com.vaultx.admin.data.model.PromoCode) {
+    fun createPromoCode(promo: com.vaultx.admin.data.model.PromoCode, onResult: (Boolean, String?) -> Unit) {
         val code = promo.code.uppercase().trim()
-        if (code.isBlank()) return
+        if (code.isBlank()) {
+            onResult(false, "Promo code is blank")
+            return
+        }
         viewModelScope.launch {
             try {
                 val data = hashMapOf<String, Any?>(
@@ -343,12 +371,19 @@ class AdminViewModel @Inject constructor(
                 )
                 firestore.collection("promo_codes").document(code).set(data).await()
                 loadData()
-            } catch (e: Exception) { e.printStackTrace() }
+                onResult(true, "Promo code created successfully")
+            } catch (e: Exception) { 
+                e.printStackTrace()
+                onResult(false, e.message)
+            }
         }
     }
 
-    fun updatePromoCode(promo: com.vaultx.admin.data.model.PromoCode) {
-        if (promo.id.isBlank()) return
+    fun updatePromoCode(promo: com.vaultx.admin.data.model.PromoCode, onResult: (Boolean, String?) -> Unit) {
+        if (promo.id.isBlank()) {
+            onResult(false, "Promo ID is blank")
+            return
+        }
         viewModelScope.launch {
             try {
                 firestore.collection("promo_codes").document(promo.id).update(mapOf(
@@ -359,16 +394,24 @@ class AdminViewModel @Inject constructor(
                     "isActive" to promo.isActive
                 )).await()
                 loadData()
-            } catch (e: Exception) { e.printStackTrace() }
+                onResult(true, "Promo code updated successfully")
+            } catch (e: Exception) { 
+                e.printStackTrace()
+                onResult(false, e.message)
+            }
         }
     }
 
-    fun deletePromoCode(promoId: String) {
+    fun deletePromoCode(promoId: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 firestore.collection("promo_codes").document(promoId).delete().await()
                 loadData()
-            } catch (e: Exception) { e.printStackTrace() }
+                onResult(true, "Promo code deleted successfully")
+            } catch (e: Exception) { 
+                e.printStackTrace()
+                onResult(false, e.message)
+            }
         }
     }
 }

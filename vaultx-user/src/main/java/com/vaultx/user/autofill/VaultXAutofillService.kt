@@ -120,6 +120,27 @@ class VaultXAutofillService : AutofillService() {
                     }
 
                     callback.onSuccess(fillResponseBuilder.build())
+                } catch (e: IllegalStateException) {
+                    // Vault is locked. Prompt for authentication.
+                    val authIntent = android.content.Intent(this@VaultXAutofillService, AutofillAuthActivity::class.java)
+                    val pendingIntent = android.app.PendingIntent.getActivity(
+                        this@VaultXAutofillService,
+                        1001,
+                        authIntent,
+                        android.app.PendingIntent.FLAG_CANCEL_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                    )
+                    val presentation = RemoteViews(packageName, android.R.layout.simple_list_item_1).apply {
+                        setTextViewText(android.R.id.text1, "Unlock VaultX to Autofill")
+                    }
+                    val ids = listOfNotNull(parser.usernameNode?.autofillId, parser.passwordNode?.autofillId).toTypedArray()
+                    if (ids.isNotEmpty()) {
+                        val fillResponse = FillResponse.Builder()
+                            .setAuthentication(ids, pendingIntent.intentSender, presentation)
+                            .build()
+                        callback.onSuccess(fillResponse)
+                    } else {
+                        callback.onSuccess(null)
+                    }
                 } catch (e: Exception) {
                     // Don't crash — just return null (no fill)
                     try {
@@ -178,11 +199,14 @@ class AssistStructureParser {
             } else {
                 val className = node.className ?: ""
                 val inputType = node.inputType
-                if (className.contains("EditText")) {
-                    if (inputType and android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD != 0 ||
-                        inputType and android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD != 0) {
+                if (className.contains("EditText") || className.contains("TextInputEditText")) {
+                    val variation = inputType and android.text.InputType.TYPE_MASK_VARIATION
+                    if (variation == android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+                        variation == android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD ||
+                        variation == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD) {
                         if (passwordNode == null) passwordNode = node
-                    } else if (inputType and android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS != 0) {
+                    } else if (variation == android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS ||
+                               variation == android.text.InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS) {
                         if (usernameNode == null) usernameNode = node
                     }
                 }

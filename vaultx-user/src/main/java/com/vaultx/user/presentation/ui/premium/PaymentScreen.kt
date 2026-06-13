@@ -328,7 +328,13 @@ fun PaymentScreen(
             // ── Submit button ─────────────────────────────────────────────────
             VaultButton(
                 text      = if (finalPrice == 0.0) "Claim Free Premium" else "Submit for Approval",
-                onClick   = { viewModel.submitPayment(planId) },
+                onClick   = {
+                    viewModel.submitPayment(planId) { success, message ->
+                        if (message != null) {
+                            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
                 isLoading = isLoading,
                 enabled   = if (finalPrice == 0.0) true else utr.length == 12
             )
