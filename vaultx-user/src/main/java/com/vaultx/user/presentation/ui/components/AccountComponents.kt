@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.blur
 import com.vaultx.user.data.model.PlatformType
 import com.vaultx.user.presentation.theme.*
 
@@ -92,14 +93,24 @@ fun AccountCard(
     modifier:      Modifier = Modifier
 ) {
     val visual = platformVisual(platformType)
-    Surface(
-        onClick       = onClick,
-        modifier      = modifier.fillMaxWidth(),
-        shape         = ShapeCard,
-        color         = MaterialTheme.colorScheme.surface,
-        border        = androidx.compose.foundation.BorderStroke(1.5.dp, visual.color.copy(alpha = 0.4f)),
-        tonalElevation = 0.dp,
-    ) {
+    val hue = (kotlin.math.abs(platformLabel.hashCode().toLong()) % 360).toFloat()
+    val glowColor = Color.hsv(hue, 0.6f, 0.5f)
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .blur(24.dp)
+                .background(glowColor.copy(alpha = 0.3f), ShapeCard)
+        )
+        Surface(
+            onClick       = onClick,
+            modifier      = Modifier.fillMaxWidth(),
+            shape         = ShapeCard,
+            color         = MaterialTheme.colorScheme.surface,
+            border        = androidx.compose.foundation.BorderStroke(1.5.dp, visual.color.copy(alpha = 0.4f)),
+            tonalElevation = 0.dp,
+        ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -159,6 +170,7 @@ fun AccountCard(
                     modifier = Modifier.size(20.dp)
                 )
             }
+        }
         }
     }
 }

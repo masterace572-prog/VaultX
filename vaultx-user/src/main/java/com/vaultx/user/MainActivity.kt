@@ -58,7 +58,9 @@ class MainActivity : FragmentActivity() {
         setContent {
             val appViewModel: AppViewModel = hiltViewModel()
             val homeViewModel: com.vaultx.user.presentation.viewmodel.HomeViewModel = hiltViewModel()
+            val settingsViewModel: com.vaultx.user.presentation.viewmodel.SettingsViewModel = hiltViewModel()
             val isDarkMode by appViewModel.isDarkMode.collectAsState()
+            val useDynamicColor by settingsViewModel.useDynamicTheming.collectAsState()
             val isLoading by appViewModel.isLoading.collectAsState()
             val appConfig by homeViewModel.appConfig.collectAsState()
 
@@ -71,7 +73,7 @@ class MainActivity : FragmentActivity() {
 
             splashScreen.setKeepOnScreenCondition { isLoading || (appConfig == null && !configTimeout) }
 
-            VaultXTheme(userDarkModeOverride = isDarkMode) {
+            VaultXTheme(userDarkModeOverride = isDarkMode, isDynamicColor = useDynamicColor) {
                 if (appConfig?.isMaintenanceMode == true) {
                     com.vaultx.user.presentation.ui.maintenance.MaintenanceScreen(
                         message = appConfig?.maintenanceMessage ?: "We are currently under maintenance. Please check back later.",

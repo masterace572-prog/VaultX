@@ -3,8 +3,10 @@ package com.vaultx.user.presentation.ui.home
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -47,6 +49,8 @@ fun HomeScreen(
     val isLoading    by homeViewModel.isLoading.collectAsState()
     val isRefreshing by homeViewModel.isLoading.collectAsState()
 
+    val listState = rememberLazyListState()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -59,15 +63,16 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick           = onNavigateToAdd,
+                expanded          = listState.isScrollingUp(),
+                icon              = { Icon(Icons.Outlined.Add, contentDescription = "Add account") },
+                text              = { Text("Add") },
                 containerColor    = MaterialTheme.colorScheme.primary,
                 contentColor      = MaterialTheme.colorScheme.onPrimary,
                 shape             = ShapeFull,
                 elevation         = FloatingActionButtonDefaults.elevation(0.dp, 0.dp)
-            ) {
-                Icon(Icons.Outlined.Add, contentDescription = "Add account")
-            }
+            )
         }
     ) { padding ->
         if (isLoading && accounts.isEmpty()) {
@@ -77,7 +82,7 @@ fun HomeScreen(
                 contentPadding      = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                items(6) { AccountCardSkeleton() }
+                items(5) { ShimmerAccountCard() }
             }
         } else if (accounts.isEmpty()) {
             androidx.compose.material3.pulltorefresh.PullToRefreshBox(
@@ -99,6 +104,7 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize().padding(padding)
             ) {
                 LazyColumn(
+                    state               = listState,
                     modifier            = Modifier.fillMaxSize(),
                     contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -118,16 +124,50 @@ fun HomeScreen(
                             SectionHeader(title = type.displayName.uppercase())
                         }
                         items(entries, key = { it.id }) { entry ->
-                            AccountCard(
-                                platformType  = entry.platformType,
-                                platformLabel = entry.platformLabel,
-                                subtitle      = entry.username
-                                    ?: entry.email?.maskEmail()
-                                    ?: "No identifier",
-                                isFavorite    = entry.isFavorite,
-                                isGameAccount = entry.gameAccount != null,
-                                onClick       = { onNavigateToDetail(entry.id) }
+                            val dismissState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = { false } // Keep it strictly visual for now, let it bounce back with spring physics
                             )
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = false,
+                                enableDismissFromEndToStart = true,
+                                backgroundContent = {
+                                    val color by animateColorAsState(
+                                        if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) 
+                                            MaterialTheme.colorScheme.errorContainer 
+                                        else 
+                                            androidx.compose.ui.graphics.Color.Transparent,
+                                        label = "bg_color"
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(color, ShapeCard)
+                                            .padding(horizontal = 24.dp),
+                                        contentAlignment = Alignment.CenterEnd
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Delete,
+                                            contentDescription = "Delete",
+                                            tint = if (color == androidx.compose.ui.graphics.Color.Transparent) 
+                                                       androidx.compose.ui.graphics.Color.Transparent 
+                                                   else 
+                                                       MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    }
+                                }
+                            ) {
+                                AccountCard(
+                                    platformType  = entry.platformType,
+                                    platformLabel = entry.platformLabel,
+                                    subtitle      = entry.username
+                                        ?: entry.email?.maskEmail()
+                                        ?: "No identifier",
+                                    isFavorite    = entry.isFavorite,
+                                    isGameAccount = entry.gameAccount != null,
+                                    onClick       = { onNavigateToDetail(entry.id) }
+                                )
+                            }
                             Spacer(Modifier.height(2.dp))
                         }
                         item(key = "spacer_${type.key}") { Spacer(Modifier.height(8.dp)) }
@@ -339,6 +379,24 @@ data class UserProfile(
 )
 
 // ── Extension ─────────────────────────────────────────────────────────────────
+@Composable
+fun androidx.compose.foundation.lazy.LazyListState.isScrollingUp(): Boolean {
+    var previousIndex by remember(this) { mutableStateOf(firstVisibleItemIndex) }
+    var previousScrollOffset by remember(this) { mutableStateOf(firstVisibleItemScrollOffset) }
+    return remember(this) {
+        derivedStateOf {
+            if (previousIndex != firstVisibleItemIndex) {
+                previousIndex > firstVisibleItemIndex
+            } else {
+                previousScrollOffset >= firstVisibleItemScrollOffset
+            }.also {
+                previousIndex = firstVisibleItemIndex
+                previousScrollOffset = firstVisibleItemScrollOffset
+            }
+        }
+    }.value
+}
+
 private fun String.maskEmail(): String {
     val parts = split("@")
     if (parts.size != 2) return this

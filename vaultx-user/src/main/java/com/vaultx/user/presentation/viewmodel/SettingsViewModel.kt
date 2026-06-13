@@ -8,6 +8,10 @@ import com.vaultx.user.di.VaultSessionManager
 import com.vaultx.user.domain.repository.AccountRepository
 import com.vaultx.user.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -25,6 +29,7 @@ class SettingsViewModel @Inject constructor(
     private val firebaseAuth:      FirebaseAuth,
     private val firestore:         FirebaseFirestore,
     private val prefs:             android.content.SharedPreferences,
+    private val dataStore:         DataStore<Preferences>
 ) : ViewModel() {
 
     private val _accountCount       = MutableStateFlow(0)
@@ -50,6 +55,20 @@ class SettingsViewModel @Inject constructor(
     val lastBackupTime:     StateFlow<String?> = _lastBackupTime.asStateFlow()
     val screenshotProtectionEnabled: StateFlow<Boolean> = _screenshotProtectionEnabled.asStateFlow()
     val supportEmail:       StateFlow<String>  = _supportEmail.asStateFlow()
+
+    companion object {
+        val DYNAMIC_THEMING_KEY = booleanPreferencesKey("dynamic_theming")
+    }
+
+    val useDynamicTheming: StateFlow<Boolean> = dataStore.data
+        .map { prefs -> prefs[DYNAMIC_THEMING_KEY] ?: false }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun setDynamicTheming(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.edit { prefs -> prefs[DYNAMIC_THEMING_KEY] = enabled }
+        }
+    }
 
     init {
         loadSettings()

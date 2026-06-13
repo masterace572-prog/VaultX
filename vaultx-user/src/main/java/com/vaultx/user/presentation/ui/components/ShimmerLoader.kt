@@ -116,3 +116,60 @@ fun TextSkeleton(
             .shimmerEffect()
     )
 }
+
+// ── Shimmer Account Card ──────────────────────────────────────────────────────
+@Composable
+fun ShimmerAccountCard(modifier: Modifier = Modifier) {
+    androidx.compose.material3.Surface(
+        modifier      = modifier.fillMaxWidth(),
+        shape         = ShapeCard,
+        color         = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+        border        = androidx.compose.foundation.BorderStroke(1.5.dp, androidx.compose.material3.MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+        tonalElevation = 0.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Icon placeholder
+            androidx.compose.material3.Surface(
+                modifier = Modifier.size(52.dp),
+                shape    = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+                color    = Color.Transparent
+            ) {
+                Box(modifier = Modifier.fillMaxSize().shimmerEffect())
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Title line
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(16.dp)
+                        .background(Color.Transparent, androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                        .shimmerEffect()
+                )
+                // Subtitle line
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(14.dp)
+                        .background(Color.Transparent, androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                        .shimmerEffect()
+                )
+            }
+
+            // Trailing chevron placeholder
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .background(Color.Transparent, androidx.compose.foundation.shape.CircleShape)
+                    .shimmerEffect()
+            )
+        }
+    }
+}

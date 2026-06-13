@@ -42,6 +42,7 @@ fun SettingsScreen(
     settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val isDarkMode      by appViewModel.isDarkMode.collectAsState()
+    val useDynamicTheming by settingsViewModel.useDynamicTheming.collectAsState()
     val accountCount    by settingsViewModel.accountCount.collectAsState()
     val cloudSyncEnabled by settingsViewModel.cloudSyncEnabled.collectAsState()
     val biometricLockEnabled by settingsViewModel.biometricLockEnabled.collectAsState()
@@ -109,6 +110,14 @@ fun SettingsScreen(
                     subtitle = "Switch between light and dark theme",
                     checked = isDarkMode ?: false,
                     onToggle = { appViewModel.toggleDarkMode(it) }
+                )
+                VaultDivider()
+                SettingsToggleRow(
+                    icon     = Icons.Outlined.Palette,
+                    title    = "Material You",
+                    subtitle = "Use dynamic colors based on your wallpaper (Android 12+)",
+                    checked  = useDynamicTheming,
+                    onToggle = { settingsViewModel.setDynamicTheming(it) }
                 )
             }
 

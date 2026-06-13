@@ -5,9 +5,9 @@ $headers = @{ "Authorization" = "token $token"; "Accept" = "application/vnd.gith
 
 # Create Release
 $body = @{
-    tag_name = "v2.2.2"
-    name = "VaultX v2.2.2"
-    body = "Release for VaultX v2.2.2 - Promotional Website, Offline Decryptor, Premium Overhaul, Bug Fixes"
+    tag_name = "v2.3.0"
+    name = "VaultX v2.3.0"
+    body = "Release for VaultX v2.3.0 - Premium Stripe-like UI Overhaul, Dynamic Support Email, Game Account Emails"
 } | ConvertTo-Json
 
 Write-Host "Creating release..."
@@ -18,7 +18,7 @@ Write-Host "Release created: $htmlUrl"
 
 # Upload User Asset
 $assetPathUser = "vaultx-user\build\outputs\apk\release\vaultx-user-release.apk"
-$assetNameUser = "VaultX-User-v2.2.2.apk"
+$assetNameUser = "VaultX-User-v2.3.0.apk"
 $uploadUriUser = "$uploadUrl?name=$assetNameUser"
 
 Write-Host "Uploading user asset..."
@@ -26,7 +26,7 @@ curl.exe -X POST -H "Authorization: token $token" -H "Content-Type: application/
 
 # Upload Admin Asset
 $assetPathAdmin = "vaultx-admin\build\outputs\apk\release\vaultx-admin-release.apk"
-$assetNameAdmin = "VaultX-Admin-v2.2.2.apk"
+$assetNameAdmin = "VaultX-Admin-v2.3.0.apk"
 $uploadUriAdmin = "$uploadUrl?name=$assetNameAdmin"
 
 Write-Host "Uploading admin asset..."

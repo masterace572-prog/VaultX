@@ -1,11 +1,9 @@
 {
-  "versionCode": 10,
-  "versionName": "2.3.0",
-  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.3.0/VaultX-User-v2.3.0.apk",
+  "versionCode": 11,
+  "versionName": "2.3.1",
+  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.3.1/VaultX-User-v2.3.1.apk",
   "changelog": [
-    "Premium Stripe-like UI Overhaul",
-    "Help & Support dynamic email routing",
-    "Added Email support for Game accounts"
+    "Premium UI Enhancements. Introducing ultra-premium animations, material you theming, shimmer loading, spring physics, and contextual card glows."
   ],
   "forcedUpdate": false
 }

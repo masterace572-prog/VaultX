@@ -83,7 +83,7 @@ fun VaultXTheme(
     // If overridden by user setting, use that; otherwise use system
     userDarkModeOverride: Boolean? = null,
     // Enable dynamic color support by default
-    dynamicColor: Boolean = true,
+    isDynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val effectiveDarkMode = userDarkModeOverride ?: darkTheme
@@ -107,7 +107,7 @@ fun VaultXTheme(
     )
 
     val colorScheme = when {
-        dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S -> {
+        isDynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S -> {
             if (effectiveDarkMode) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         effectiveDarkMode -> DarkColorScheme.copy(
