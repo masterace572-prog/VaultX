@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.*
 import androidx.navigation.compose.*
+import com.vaultx.user.presentation.ui.splash.SplashScreen
 import com.vaultx.user.presentation.ui.auth.VaultLockScreen
 import com.vaultx.user.presentation.ui.auth.LoginScreen
 import com.vaultx.user.presentation.ui.auth.RegisterScreen
@@ -20,6 +21,7 @@ import com.vaultx.user.presentation.ui.settings.EditProfileScreen
 import com.vaultx.user.presentation.ui.settings.HelpSupportScreen
 import com.vaultx.user.presentation.ui.premium.PremiumScreen
 import com.vaultx.user.presentation.ui.premium.PaymentScreen
+import com.vaultx.user.presentation.ui.premium.MembershipScreen
 import com.vaultx.user.presentation.viewmodel.AppViewModel
 import com.vaultx.user.presentation.viewmodel.AuthState
 
@@ -42,12 +44,25 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = Screen.Splash.route,
         enterTransition  = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) },
         exitTransition   = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) },
         popEnterTransition  = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) },
         popExitTransition   = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) },
     ) {
+
+        // ── Splash ────────────────────────────────────────────────────────────
+        composable(
+            route = Screen.Splash.route,
+            enterTransition = { fadeIn(tween(400)) },
+            exitTransition  = { fadeOut(tween(400)) }
+        ) {
+            SplashScreen(onSplashComplete = {
+                navController.navigate(startDestination) {
+                    popUpTo(Screen.Splash.route) { inclusive = true }
+                }
+            })
+        }
 
         // ── Auth flow ─────────────────────────────────────────────────────────
         composable(
@@ -108,7 +123,7 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
                 onNavigateToDetail  = { id -> navController.navigate(Screen.AccountDetail.createRoute(id)) },
                 onNavigateToSearch  = { navController.navigate(Screen.Search.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToPremium = { navController.navigate(Screen.Premium.route) },
+                onNavigateToPremium = { navController.navigate(Screen.Membership.route) },
             )
         }
 
@@ -169,7 +184,7 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
                 },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateToAppLockSetup = { navController.navigate(Screen.AppLockSetup.route) },
-                onNavigateToPremium = { navController.navigate(Screen.Premium.route) },
+                onNavigateToPremium = { navController.navigate(Screen.Membership.route) },
                 onNavigateToHelpSupport = { navController.navigate(Screen.HelpSupport.route) }
             )
         }
@@ -192,23 +207,46 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
             )
         }
 
-        // ── Premium ───────────────────────────────────────────────────────────
+        // ── Premium / Membership ──────────────────────────────────────────────
+        composable(route = Screen.Membership.route) {
+            MembershipScreen(
+                onBack = { navController.popBackStack() },
+                onUpgradeClick = { navController.navigate(Screen.Premium.route) }
+            )
+        }
+
         composable(route = Screen.Premium.route) {
+            val viewModel = hiltViewModel<com.vaultx.user.presentation.viewmodel.PremiumViewModel>()
             PremiumScreen(
-                onSelectPlan = { planId -> navController.navigate(Screen.Payment.createRoute(planId)) },
-                onBack = { navController.popBackStack() }
+                onSelectPlan = { planId -> 
+                    val appliedPromo = viewModel.appliedPromo.value?.code
+                    navController.navigate(Screen.Payment.createRoute(planId, appliedPromo)) 
+                },
+                onBack = { navController.popBackStack() },
+                viewModel = viewModel
             )
         }
 
         composable(
             route = Screen.Payment.route,
-            arguments = listOf(navArgument("planId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("planId") { type = NavType.StringType },
+                navArgument("promoCode") { type = NavType.StringType; nullable = true }
+            )
         ) { back ->
             val planId = back.arguments?.getString("planId") ?: return@composable
+            val promoCode = back.arguments?.getString("promoCode")
+            val viewModel = hiltViewModel<com.vaultx.user.presentation.viewmodel.PaymentViewModel>()
+            LaunchedEffect(promoCode) {
+                if (!promoCode.isNullOrBlank()) {
+                    viewModel.applyPromoCode(promoCode)
+                }
+            }
             PaymentScreen(
                 planId = planId,
                 onSubmitted = { navController.popBackStack() },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                viewModel = viewModel
             )
         }
     }

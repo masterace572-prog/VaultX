@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultX - Secure Password Manager</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card {
+            background-color: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        #result-area {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#8b5cf6',
+                        accent: '#ec4899',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen flex flex-col items-center">
+
+    <!-- Header -->
+    <header class="w-full max-w-6xl py-6 px-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-tr from-primary to-secondary rounded-xl flex items-center justify-center font-bold text-xl shadow-lg">
+                V
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">VaultX</h1>
+        </div>
+        <nav class="hidden md:flex gap-8 text-sm font-medium text-slate-300">
+            <a href="#features" class="hover:text-white transition">Features</a>
+            <a href="#about" class="hover:text-white transition">About</a>
+            <a href="#decryptor" class="hover:text-white transition">Decryptor</a>
+        </nav>
+        <a href="https://github.com/masterace572-prog/VaultX/releases/latest" target="_blank" class="bg-white text-slate-900 px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-slate-200 transition shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            Download App
+        </a>
+    </header>
+
+    <!-- Hero -->
+    <main class="w-full max-w-6xl px-6 flex-1 flex flex-col items-center text-center mt-20">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300 mb-8">
+            <span class="w-2 h-2 rounded-full bg-green-400"></span> Version 2.2.2 Available Now
+        </div>
+        
+        <h2 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 max-w-4xl leading-tight">
+            The most secure home for your <br class="hidden md:block" />
+            <span class="gradient-text">passwords & game accounts.</span>
+        </h2>
+        
+        <p class="text-lg text-slate-400 mb-10 max-w-2xl leading-relaxed">
+            VaultX utilizes military-grade AES-256-GCM zero-knowledge encryption directly on your device. We never see your passwords. Seamlessly autofill across apps.
+        </p>
+        
+        <div class="flex gap-4 mb-20">
+            <a href="https://github.com/masterace572-prog/VaultX/releases/latest" class="bg-gradient-to-r from-primary to-secondary px-8 py-4 rounded-full font-bold text-white hover:opacity-90 transition shadow-[0_0_20px_rgba(59,130,246,0.5)]">
+                Download Latest APK
+            </a>
+            <a href="#decryptor" class="bg-slate-800 border border-slate-700 px-8 py-4 rounded-full font-bold text-white hover:bg-slate-700 transition">
+                Offline Decryptor
+            </a>
+        </div>
+
+        <!-- Features Section -->
+        <section id="features" class="w-full py-16 text-left">
+            <div class="text-center mb-16">
+                <h3 class="text-3xl font-bold mb-4">Why choose VaultX?</h3>
+                <p class="text-slate-400">Packed with premium features, designed for maximum security.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="card p-8 rounded-2xl">
+                    <div class="w-12 h-12 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center mb-6 text-xl">🛡️</div>
+                    <h4 class="text-xl font-bold mb-3">Zero Knowledge</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">Your master password never leaves your device. Data is encrypted using AES-GCM before it ever touches our servers.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="card p-8 rounded-2xl">
+                    <div class="w-12 h-12 bg-purple-500/20 text-purple-400 rounded-xl flex items-center justify-center mb-6 text-xl">⚡</div>
+                    <h4 class="text-xl font-bold mb-3">Native Autofill</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">Instantly fill your usernames and passwords in any Android app or browser with our seamlessly integrated Autofill service.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="card p-8 rounded-2xl">
+                    <div class="w-12 h-12 bg-pink-500/20 text-pink-400 rounded-xl flex items-center justify-center mb-6 text-xl">🎮</div>
+                    <h4 class="text-xl font-bold mb-3">Gaming Optimized</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed">Specialized templates to store your Game IDs, Server Regions, and account details securely along with standard passwords.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Decryptor Tool Section -->
+        <section id="decryptor" class="w-full py-20">
+            <div class="card rounded-3xl p-8 md:p-12 relative overflow-hidden text-left">
+                <!-- Decorative glow -->
+                <div class="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full filter blur-[100px] opacity-20 -z-10 translate-x-1/2 -translate-y-1/2"></div>
+                
+                <div class="max-w-2xl mb-10">
+                    <h3 class="text-3xl font-bold mb-4">Offline Backup Decryptor</h3>
+                    <p class="text-slate-400">
+                        Exported a `.json` backup from the VaultX app? You can decrypt and read your vault data here, entirely offline. Your file and password are never sent to any server. This tool runs 100% locally in your browser.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/50 p-6 md:p-8 rounded-2xl border border-slate-700/50">
+                    <form id="decryptForm" class="flex flex-col gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">1. Select your VaultX Backup File</label>
+                            <input type="file" id="fileInput" accept=".json" class="block w-full text-sm text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 transition" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">2. Enter Export Password</label>
+                            <input type="password" id="passwordInput" placeholder="••••••••••••" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition" required>
+                        </div>
+
+                        <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl transition shadow-[0_0_15px_rgba(59,130,246,0.3)] mt-2">
+                            Decrypt Vault
+                        </button>
+                    </form>
+
+                    <div id="errorBox" class="hidden mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                        <span id="errorMessage"></span>
+                    </div>
+
+                    <div id="resultBox" class="hidden mt-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-sm font-semibold text-green-400">Decryption Successful</h4>
+                            <span class="text-xs text-slate-500">Raw JSON Format</span>
+                        </div>
+                        <div class="bg-slate-950 rounded-xl p-4 border border-slate-800 max-h-96 overflow-y-auto">
+                            <pre id="result-area" class="text-xs font-mono text-slate-300"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-6xl px-6 py-8 mt-10 border-t border-slate-800 flex justify-between items-center text-sm text-slate-500">
+        <p>&copy; 2026 VaultX. All rights reserved.</p>
+        <p>Built with ❤️</p>
+    </footer>
+
+    <!-- Decryption Logic -->
+    <script>
+        // VaultX AES-256-GCM Decryption Logic
+        
+        async function deriveKey(passwordStr, saltBase64) {
+            const encoder = new TextEncoder();
+            const passwordBytes = encoder.encode(passwordStr);
+            const saltBytes = Uint8Array.from(atob(saltBase64), c => c.charCodeAt(0));
+
+            // Import password as base key for PBKDF2
+            const baseKey = await crypto.subtle.importKey(
+                "raw",
+                passwordBytes,
+                "PBKDF2",
+                false,
+                ["deriveBits", "deriveKey"]
+            );
+
+            // Derive 256-bit AES-GCM key
+            // Note: VaultX Android uses 10000 iterations for export
+            const derivedKey = await crypto.subtle.deriveKey(
+                {
+                    name: "PBKDF2",
+                    salt: saltBytes,
+                    iterations: 10000,
+                    hash: "SHA-256"
+                },
+                baseKey,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["decrypt"]
+            );
+
+            return derivedKey;
+        }
+
+        async function decryptData(ciphertextB64, ivB64, key) {
+            const ciphertext = Uint8Array.from(atob(ciphertextB64), c => c.charCodeAt(0));
+            const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+
+            try {
+                const decryptedBuffer = await crypto.subtle.decrypt(
+                    {
+                        name: "AES-GCM",
+                        iv: iv
+                    },
+                    key,
+                    ciphertext
+                );
+                return new TextDecoder().decode(decryptedBuffer);
+            } catch (e) {
+                throw new Error("Invalid password or corrupt data.");
+            }
+        }
+
+        document.getElementById('decryptForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const passwordInput = document.getElementById('passwordInput');
+            const errorBox = document.getElementById('errorBox');
+            const errorMessage = document.getElementById('errorMessage');
+            const resultBox = document.getElementById('resultBox');
+            const resultArea = document.getElementById('result-area');
+
+            errorBox.classList.add('hidden');
+            resultBox.classList.add('hidden');
+
+            if (!fileInput.files.length) {
+                errorMessage.innerText = "Please select a file.";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const password = passwordInput.value;
+
+            try {
+                const text = await file.text();
+                const json = JSON.parse(text);
+
+                if (!json.salt || !json.iv || !json.ciphertext) {
+                    throw new Error("Invalid VaultX backup file format. Missing crypto parameters.");
+                }
+
+                // Decrypt
+                const key = await deriveKey(password, json.salt);
+                const decryptedStr = await decryptData(json.ciphertext, json.iv, key);
+                
+                // Pretty print the decrypted JSON
+                const parsedAccounts = JSON.parse(decryptedStr);
+                resultArea.innerText = JSON.stringify(parsedAccounts, null, 4);
+                resultBox.classList.remove('hidden');
+                
+            } catch (err) {
+                errorMessage.innerText = "Decryption Failed: " + err.message;
+                errorBox.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

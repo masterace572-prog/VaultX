@@ -35,7 +35,7 @@ service cloud.firestore {
       allow create: if isOwner(uid);
       // Allowing users to update their own tier so that client-side promo code redemption works.
       // NOTE: In a production environment with a backend, this should be restricted to Cloud Functions.
-      allow update: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
       allow delete: if false; // Never delete via client
     }
 

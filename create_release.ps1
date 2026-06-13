@@ -5,9 +5,9 @@ $headers = @{ "Authorization" = "token $token"; "Accept" = "application/vnd.gith
 
 # Create Release
 $body = @{
-    tag_name = "v1.2.1"
-    name = "VaultX v1.2.1"
-    body = "Release for VaultX v1.2.1 - Colorful UI Update"
+    tag_name = "v2.2.2"
+    name = "VaultX v2.2.2"
+    body = "Release for VaultX v2.2.2 - Promotional Website, Offline Decryptor, Premium Overhaul, Bug Fixes"
 } | ConvertTo-Json
 
 Write-Host "Creating release..."
@@ -16,25 +16,20 @@ $uploadUrl = $releaseResponse.upload_url -replace '\{.*\}', ''
 $htmlUrl = $releaseResponse.html_url
 Write-Host "Release created: $htmlUrl"
 
-# Upload Asset
-$assetPath = "vaultx-user\build\outputs\apk\debug\vaultx-user-debug.apk"
-$assetName = "vaultx-user-v1.2.1.apk"
-$uploadUri = "$uploadUrl?name=$assetName"
+# Upload User Asset
+$assetPathUser = "vaultx-user\build\outputs\apk\release\vaultx-user-release.apk"
+$assetNameUser = "VaultX-User-v2.2.2.apk"
+$uploadUriUser = "$uploadUrl?name=$assetNameUser"
 
-Write-Host "Uploading asset..."
-$uploadHeaders = @{ 
-    "Authorization" = "token $token"
-    "Accept" = "application/vnd.github.v3+json"
-    "Content-Type" = "application/vnd.android.package-archive"
-}
-# We use curl.exe for the actual upload since it's much more stable than Invoke-RestMethod for large binary files
-curl.exe -X POST -H "Authorization: token $token" -H "Content-Type: application/vnd.android.package-archive" --data-binary "@$assetPath" "$uploadUri"
+Write-Host "Uploading user asset..."
+curl.exe -X POST -H "Authorization: token $token" -H "Content-Type: application/vnd.android.package-archive" --data-binary "@$assetPathUser" "$uploadUriUser"
 
-# Update JSON file
-$jsonPath = "update_v1.2.0.json"
-$jsonContent = Get-Content $jsonPath | ConvertFrom-Json
-$jsonContent.versionCode = 4
-$jsonContent.versionName = "1.2.1"
-$jsonContent.downloadUrl = "https://github.com/$repo/releases/download/v1.2.1/$assetName"
-$jsonContent | ConvertTo-Json -Depth 10 | Set-Content $jsonPath
-Write-Host "Updated update_v1.2.0.json with URL: $($jsonContent.downloadUrl)"
+# Upload Admin Asset
+$assetPathAdmin = "vaultx-admin\build\outputs\apk\release\vaultx-admin-release.apk"
+$assetNameAdmin = "VaultX-Admin-v2.2.2.apk"
+$uploadUriAdmin = "$uploadUrl?name=$assetNameAdmin"
+
+Write-Host "Uploading admin asset..."
+curl.exe -X POST -H "Authorization: token $token" -H "Content-Type: application/vnd.android.package-archive" --data-binary "@$assetPathAdmin" "$uploadUriAdmin"
+
+Write-Host "Done!"

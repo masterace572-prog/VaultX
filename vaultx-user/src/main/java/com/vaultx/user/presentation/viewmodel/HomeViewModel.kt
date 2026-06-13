@@ -53,10 +53,12 @@ class HomeViewModel @Inject constructor(
                         val diff = it - System.currentTimeMillis()
                         if (diff > 0) (diff / 86_400_000L).toInt() else 0
                     }
+                    val planName  = doc.getString("plan_name")
                     _userProfile.value = UserProfile(
                         displayName = doc.getString("display_name") ?: "there",
                         email       = doc.getString("email") ?: "",
                         isPremium   = tier == "premium" && (daysLeft ?: 0) > 0,
+                        planName    = planName,
                         daysLeft    = daysLeft
                     )
                 }

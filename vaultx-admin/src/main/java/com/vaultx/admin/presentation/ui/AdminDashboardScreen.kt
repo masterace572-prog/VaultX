@@ -278,28 +278,17 @@ fun UserAdminCard(
                         expanded = showActionMenu,
                         onDismissRequest = { showActionMenu = false }
                     ) {
-                        // Dynamically generate grant premium options from plans
-                        plans.filter { it.isActive }.forEach { plan ->
-                            DropdownMenuItem(
-                                text = { Text("Grant ${plan.name} (${plan.durationDays} Days)") },
-                                onClick = { onGrantPremium(plan.durationDays); showActionMenu = false },
-                                leadingIcon = { Icon(Icons.Outlined.WorkspacePremium, null) }
-                            )
-                        }
-                        
-                        if (plans.isEmpty()) {
-                            DropdownMenuItem(
-                                text = { Text("Grant 30 Days Premium") },
-                                onClick = { onGrantPremium(30); showActionMenu = false },
-                                leadingIcon = { Icon(Icons.Outlined.WorkspacePremium, null) }
-                            )
-                        }
-
                         if (user.tier == "premium") {
                             DropdownMenuItem(
                                 text = { Text("Revoke Premium", color = MaterialTheme.colorScheme.error) },
                                 onClick = { onRevokePremium(); showActionMenu = false },
                                 leadingIcon = { Icon(Icons.Outlined.Cancel, null, tint = MaterialTheme.colorScheme.error) }
+                            )
+                        } else {
+                            DropdownMenuItem(
+                                text = { Text("No actions available") },
+                                onClick = { showActionMenu = false },
+                                enabled = false
                             )
                         }
                     }

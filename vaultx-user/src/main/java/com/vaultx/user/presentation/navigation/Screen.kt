@@ -6,6 +6,9 @@ package com.vaultx.user.presentation.navigation
 
 sealed class Screen(val route: String) {
 
+    // ── Splash ────────────────────────────────────────────────────────────────
+    object Splash        : Screen("splash")
+
     // ── Auth flow ─────────────────────────────────────────────────────────────
     object VaultLock     : Screen("vault_lock")
     object Login         : Screen("login")
@@ -28,9 +31,11 @@ sealed class Screen(val route: String) {
     object AppLockSetup  : Screen("app_lock_setup")
     object HelpSupport   : Screen("help_support")
 
-    // ── Payment / Premium ─────────────────────────────────────────────────────
+    // ── Payment / Premium / Membership ────────────────────────────────────────
+    object Membership    : Screen("membership")
     object Premium       : Screen("premium")
-    object Payment       : Screen("payment/{planId}") {
-        fun createRoute(planId: String) = "payment/$planId"
+    object Payment       : Screen("payment/{planId}?promoCode={promoCode}") {
+        fun createRoute(planId: String, promoCode: String? = null) = 
+            if (promoCode != null) "payment/$planId?promoCode=$promoCode" else "payment/$planId"
     }
 }

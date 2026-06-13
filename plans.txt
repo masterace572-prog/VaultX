@@ -1,0 +1,27 @@
+# Example VaultX Plans
+
+Here are some suggested, realistic plans you can create in the Admin App for VaultX:
+
+### 1. Basic / Starter
+- **Name**: VaultX Starter
+- **Base Price**: 0
+- **Price**: 49
+- **Duration**: 30 (1 Month)
+- **Features**: Unlimited Accounts, Auto-Fill Support, 24/7 Priority Email Support
+- **Is Recommended**: false
+
+### 2. Pro / Most Popular
+- **Name**: VaultX Pro
+- **Base Price**: 600
+- **Price**: 399
+- **Duration**: 365 (1 Year)
+- **Features**: Everything in Starter, Offline Export Decryptor, Game Account Templates, Remove Ads
+- **Is Recommended**: true
+
+### 3. Lifetime / Ultimate
+- **Name**: VaultX Lifetime
+- **Base Price**: 2000
+- **Price**: 999
+- **Duration**: 3650 (10 Years/Lifetime)
+- **Features**: All Pro Features, Early Access to new Features, Dedicated Support Channel, One-time payment
+- **Is Recommended**: false

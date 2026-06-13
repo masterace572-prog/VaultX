@@ -38,10 +38,7 @@ data class AppConfig(
     val isAutofillEnabled: Boolean = true,
     val isSignupEnabled: Boolean = true,
     val maxFreeAccounts: Int = 5,
-    val isScreenshotAllowed: Boolean = false,
-    val supportEmail: String = "",
-    val discordLink: String = "",
-    val updateDialogMessage: String = "A new update is available. Please update to the latest version."
+    val supportEmail: String = ""
 )
 
 data class PromoCode(

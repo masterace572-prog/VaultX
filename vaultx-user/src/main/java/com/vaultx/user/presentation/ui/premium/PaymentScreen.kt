@@ -134,46 +134,7 @@ fun PaymentScreen(
                 }
             }
 
-            // ── Promo Code Input ─────────────────────────────────────────────
             val appliedPromo by viewModel.appliedPromo.collectAsState()
-            val promoError by viewModel.promoError.collectAsState()
-            var promoInput by remember { mutableStateOf("") }
-            
-            Surface(
-                shape    = ShapeCard,
-                color    = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text("Have a Promo Code?", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        VaultTextField(
-                            value = promoInput,
-                            onValueChange = { promoInput = it.uppercase() },
-                            placeholder = "Enter code",
-                            label = "Promo Code",
-                            modifier = Modifier.weight(1f),
-                            enabled = appliedPromo == null
-                        )
-                        Button(
-                            onClick = { viewModel.applyPromoCode(promoInput) },
-                            enabled = promoInput.isNotBlank() && appliedPromo == null,
-                            shape = MaterialTheme.shapes.medium
-                        ) {
-                            Text(if (appliedPromo != null) "Applied" else "Apply")
-                        }
-                    }
-                    if (promoError != null) {
-                        Text(promoError!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
 
             val finalPrice = remember(plan, appliedPromo) {
                 var price = plan?.price ?: 0.0

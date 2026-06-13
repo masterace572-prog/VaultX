@@ -188,11 +188,12 @@ fun VaultDivider(modifier: Modifier = Modifier) {
 
 // ── Tier badge (Free / Premium) ───────────────────────────────────────────────
 @Composable
-fun TierBadge(isPremium: Boolean, daysLeft: Int? = null, modifier: Modifier = Modifier) {
+fun TierBadge(isPremium: Boolean, planName: String? = null, daysLeft: Int? = null, modifier: Modifier = Modifier) {
+    val defaultName = planName?.takeIf { it.isNotBlank() } ?: "PRO"
     val label = when {
         !isPremium       -> "FREE"
-        daysLeft != null -> "PRO · ${daysLeft}d left"
-        else             -> "PRO"
+        daysLeft != null -> "$defaultName · ${daysLeft}d left"
+        else             -> defaultName
     }
     val color = if (isPremium) DarkBadgePremium else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
 

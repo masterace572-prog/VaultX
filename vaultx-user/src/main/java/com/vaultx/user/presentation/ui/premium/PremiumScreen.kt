@@ -32,6 +32,7 @@ fun PremiumScreen(
     val plans     by viewModel.plans.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val userTier  by viewModel.userTier.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -124,7 +125,19 @@ fun PremiumScreen(
                 items(plans, key = { it.id }) { plan ->
                     PlanCard(
                         plan     = plan,
-                        onClick  = { onSelectPlan(plan.id) }
+                        onClick  = { 
+                            val appliedPromoState = viewModel.appliedPromo.value
+                            if (appliedPromoState?.freePlanId == plan.id) {
+                                viewModel.submitFreePromoCode(appliedPromoState, plan) { success, msg ->
+                                    android.widget.Toast.makeText(context, msg ?: "Unknown error", android.widget.Toast.LENGTH_SHORT).show()
+                                    if (success) {
+                                        onBack()
+                                    }
+                                }
+                            } else {
+                                onSelectPlan(plan.id) 
+                            }
+                        }
                     )
                 }
             }

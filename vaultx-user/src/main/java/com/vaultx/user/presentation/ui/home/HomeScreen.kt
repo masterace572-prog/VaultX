@@ -191,6 +191,7 @@ private fun HomeTopBar(
                         titleColor = MaterialTheme.colorScheme.primary,
                         subtitle = appConfig.announcementText,
                         isPremium = userProfile?.isPremium ?: false,
+                        planName = userProfile?.planName,
                         daysLeft = userProfile?.daysLeft,
                         onPremiumClick = onPremiumClick
                     )
@@ -200,6 +201,7 @@ private fun HomeTopBar(
                         titleColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         subtitle = userProfile?.displayName ?: "there",
                         isPremium = userProfile?.isPremium ?: false,
+                        planName = userProfile?.planName,
                         daysLeft = userProfile?.daysLeft,
                         onPremiumClick = onPremiumClick
                     )
@@ -238,27 +240,10 @@ private fun WelcomeHeader(
     titleColor:     androidx.compose.ui.graphics.Color,
     subtitle:       String,
     isPremium:      Boolean,
+    planName:       String?,
     daysLeft:       Int?,
     onPremiumClick: () -> Unit
 ) {
-    var showPlanDialog by remember { mutableStateOf(false) }
-
-    if (showPlanDialog) {
-        AlertDialog(
-            onDismissRequest = { showPlanDialog = false },
-            title = { Text("Plan Details") },
-            text = { Text("Active plan: ${if (isPremium) "Premium" else "Free"}\nDays left: ${daysLeft ?: 0}") },
-            confirmButton = {
-                TextButton(onClick = { showPlanDialog = false }) { Text("OK") }
-            },
-            dismissButton = {
-                if (!isPremium) {
-                    TextButton(onClick = { showPlanDialog = false; onPremiumClick() }) { Text("Upgrade") }
-                }
-            }
-        )
-    }
-
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text     = title,
@@ -279,8 +264,9 @@ private fun WelcomeHeader(
             if (title != "Announcement") {
                 TierBadge(
                     isPremium  = isPremium,
+                    planName   = planName,
                     daysLeft   = daysLeft,
-                    modifier   = Modifier.clickableNoRipple { showPlanDialog = true }
+                    modifier   = Modifier.clickableNoRipple { onPremiumClick() } // wait, I need to pass navigate to membership
                 )
             }
         }
@@ -348,6 +334,7 @@ data class UserProfile(
     val displayName: String,
     val email: String,
     val isPremium: Boolean,
+    val planName: String?,
     val daysLeft: Int?
 )
 

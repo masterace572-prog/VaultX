@@ -41,10 +41,7 @@ fun AppConfigScreen(
     var isAutofillEnabled by remember(appConfig) { mutableStateOf(appConfig?.isAutofillEnabled ?: true) }
     var isSignupEnabled by remember(appConfig) { mutableStateOf(appConfig?.isSignupEnabled ?: true) }
     var maxFreeAccountsStr by remember(appConfig) { mutableStateOf(appConfig?.maxFreeAccounts?.toString() ?: "5") }
-    var isScreenshotAllowed by remember(appConfig) { mutableStateOf(appConfig?.isScreenshotAllowed ?: false) }
     var supportEmail by remember(appConfig) { mutableStateOf(appConfig?.supportEmail ?: "") }
-    var discordLink by remember(appConfig) { mutableStateOf(appConfig?.discordLink ?: "") }
-    var updateDialogMessage by remember(appConfig) { mutableStateOf(appConfig?.updateDialogMessage ?: "A new update is available. Please update to the latest version.") }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -66,10 +63,7 @@ fun AppConfigScreen(
                         isAutofillEnabled = isAutofillEnabled,
                         isSignupEnabled = isSignupEnabled,
                         maxFreeAccounts = maxFreeAccountsStr.toIntOrNull() ?: 5,
-                        isScreenshotAllowed = isScreenshotAllowed,
-                        supportEmail = supportEmail,
-                        discordLink = discordLink,
-                        updateDialogMessage = updateDialogMessage
+                        supportEmail = supportEmail
                     )
                     viewModel.updateAppConfig(config) { success, msg ->
                         android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
@@ -279,39 +273,11 @@ fun AppConfigScreen(
                         Text("Other Settings", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                    ) {
-                        Text("Allow Screenshots Globally", style = MaterialTheme.typography.bodyMedium)
-                        Switch(
-                            checked = isScreenshotAllowed,
-                            onCheckedChange = { isScreenshotAllowed = it },
-                            colors = SwitchDefaults.colors(checkedTrackColor = MaterialTheme.colorScheme.primary)
-                        )
-                    }
-
                     VaultTextField(
                         value = supportEmail,
                         onValueChange = { supportEmail = it },
                         label = "Support Email",
                         modifier = Modifier.fillMaxWidth()
-                    )
-
-                    VaultTextField(
-                        value = discordLink,
-                        onValueChange = { discordLink = it },
-                        label = "Discord Link",
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    VaultTextField(
-                        value = updateDialogMessage,
-                        onValueChange = { updateDialogMessage = it },
-                        label = "Update Dialog Message",
-                        modifier = Modifier.fillMaxWidth().height(100.dp),
-                        singleLine = false
                     )
                 }
             }

@@ -126,10 +126,7 @@ class AdminViewModel @Inject constructor(
                         isAutofillEnabled = configDoc.getBoolean("is_autofill_enabled") ?: true,
                         isSignupEnabled = configDoc.getBoolean("is_signup_enabled") ?: true,
                         maxFreeAccounts = configDoc.getLong("max_free_accounts")?.toInt() ?: 5,
-                        isScreenshotAllowed = configDoc.getBoolean("is_screenshot_allowed") ?: false,
-                        supportEmail = configDoc.getString("support_email") ?: "",
-                        discordLink = configDoc.getString("discord_link") ?: "",
-                        updateDialogMessage = configDoc.getString("update_dialog_message") ?: "A new update is available. Please update to the latest version."
+                        supportEmail = configDoc.getString("support_email") ?: ""
                     )
                 }
 
@@ -173,7 +170,7 @@ class AdminViewModel @Inject constructor(
     }
 
     // Admin Actions
-    fun approvePayment(paymentId: String, uid: String, planDays: Int, onResult: (Boolean, String?) -> Unit) {
+    fun approvePayment(paymentId: String, uid: String, planDays: Int, planName: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 val newExpiry = System.currentTimeMillis() + (planDays * 86_400_000L)
@@ -189,6 +186,7 @@ class AdminViewModel @Inject constructor(
                     val userRef = firestore.collection("users").document(uid)
                     batch.set(userRef, mapOf(
                         "tier" to "premium",
+                        "plan_name" to planName,
                         "premium_expiry" to newExpiry
                     ), com.google.firebase.firestore.SetOptions.merge())
                 }.await()
@@ -236,10 +234,7 @@ class AdminViewModel @Inject constructor(
                     "is_autofill_enabled" to config.isAutofillEnabled,
                     "is_signup_enabled" to config.isSignupEnabled,
                     "max_free_accounts" to config.maxFreeAccounts,
-                    "is_screenshot_allowed" to config.isScreenshotAllowed,
                     "support_email" to config.supportEmail,
-                    "discord_link" to config.discordLink,
-                    "update_dialog_message" to config.updateDialogMessage,
                     "updated_at" to com.google.firebase.Timestamp.now()
                 )).await()
                 loadData()
