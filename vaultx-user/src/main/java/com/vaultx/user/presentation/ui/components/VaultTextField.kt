@@ -126,7 +126,7 @@ fun VaultTextField(
             textStyle = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .let { m -> if (singleLine) m.height(56.dp) else m.heightIn(min = 56.dp, max = 200.dp) }
                 .onFocusChanged { isFocused = it.isFocused }
         )
 

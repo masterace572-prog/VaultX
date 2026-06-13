@@ -1,9 +1,14 @@
 package com.vaultx.user.presentation.ui.account
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -11,21 +16,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.vaultx.user.data.model.EntryType
+import com.vaultx.user.data.model.PlatformType
 import com.vaultx.user.presentation.theme.*
-import com.vaultx.user.presentation.ui.auth.ErrorBanner
 import com.vaultx.user.presentation.ui.components.*
 import com.vaultx.user.presentation.viewmodel.AccountUiState
 import com.vaultx.user.presentation.viewmodel.AccountViewModel
-
-import androidx.compose.ui.text.font.FontWeight
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EditAccountScreen — pre-populated form mirroring AddAccount
-// ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,18 +40,26 @@ fun EditAccountScreen(
     onCancel:  () -> Unit,
     viewModel: AccountViewModel = hiltViewModel()
 ) {
-    val platformType  by viewModel.formPlatformType.collectAsState()
-    val platformLabel by viewModel.formPlatformLabel.collectAsState()
-    val username      by viewModel.formUsername.collectAsState()
-    val password      by viewModel.formPassword.collectAsState()
-    val isGame        by viewModel.formIsGame.collectAsState()
-    val gameName      by viewModel.formGameName.collectAsState()
-    val gameId        by viewModel.formGameId.collectAsState()
+    val entryType      by viewModel.formEntryType.collectAsState()
+    val platformType   by viewModel.formPlatformType.collectAsState()
+    val platformLabel  by viewModel.formPlatformLabel.collectAsState()
+    val username       by viewModel.formUsername.collectAsState()
+    val password       by viewModel.formPassword.collectAsState()
+    val websiteUrl     by viewModel.formWebsiteUrl.collectAsState()
+    val appPackageName by viewModel.formAppPackageName.collectAsState()
+    val gameName       by viewModel.formGameName.collectAsState()
+    val gameId         by viewModel.formGameId.collectAsState()
     val gameDescription by viewModel.formGameDescription.collectAsState()
-    val uiState       by viewModel.uiState.collectAsState()
+    val noteContent    by viewModel.formNoteContent.collectAsState()
+    val cardHolder     by viewModel.formCardHolder.collectAsState()
+    val cardNumber     by viewModel.formCardNumber.collectAsState()
+    val cardExpiry     by viewModel.formCardExpiry.collectAsState()
+    val cardCvv        by viewModel.formCardCvv.collectAsState()
+    val cardPin        by viewModel.formCardPin.collectAsState()
+
+    val uiState        by viewModel.uiState.collectAsState()
 
     var passVisible   by remember { mutableStateOf(false) }
-
     val isLoading = uiState is AccountUiState.Loading
     val context   = androidx.compose.ui.platform.LocalContext.current
 
@@ -58,6 +71,8 @@ fun EditAccountScreen(
             onSaved()
         }
     }
+
+    DisposableEffect(Unit) { onDispose { viewModel.resetForm() } }
 
     ModalBottomSheet(
         onDismissRequest = onCancel,
@@ -74,11 +89,12 @@ fun EditAccountScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Edit Account",
+                text = "Edit Item",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
-            // ── Platform display (non-editable in edit mode) ──────────────────
+
+            // ── Type specific header display ──────────────────────────────────
             Surface(
                 shape    = ShapeCard,
                 color    = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
@@ -89,56 +105,274 @@ fun EditAccountScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
-                    PlatformIcon(type = platformType, size = 44.dp)
-                    Text(platformType.displayName, style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface)
+                    val headerIcon = when (entryType) {
+                        EntryType.LOGIN -> platformVisual(platformType).icon
+                        EntryType.GAME -> Icons.Outlined.SportsEsports
+                        EntryType.NOTE -> Icons.Outlined.Description
+                        EntryType.CARD -> Icons.Outlined.CreditCard
+                    }
+                    val headerColor = when (entryType) {
+                        EntryType.LOGIN -> platformVisual(platformType).color
+                        EntryType.GAME -> PlatformGame
+                        EntryType.NOTE -> AccentPurpleDark
+                        EntryType.CARD -> AccentBlueLight
+                    }
+                    val headerText = when (entryType) {
+                        EntryType.LOGIN -> "Login Account (${platformType.displayName})"
+                        EntryType.GAME -> "Game Account"
+                        EntryType.NOTE -> "Secure Note"
+                        EntryType.CARD -> "Payment Card"
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = headerColor.copy(alpha = 0.15f),
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = headerIcon,
+                                contentDescription = null,
+                                tint = headerColor,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = headerText,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
 
-            VaultTextField(
-                value = platformLabel, onValueChange = viewModel::onPlatformLabelChanged,
-                label = "Account Label", leadingIcon = Icons.Outlined.Label
-            )
-            
-            VaultTextField(
-                value = username, onValueChange = viewModel::onUsernameChanged,
-                label = "Username or Email *", placeholder = "you@example.com or @username", leadingIcon = Icons.Outlined.Person
-            )
-            VaultTextField(
-                value = password, onValueChange = viewModel::onPasswordChanged,
-                label = "Password *", leadingIcon = Icons.Outlined.Lock,
-                visualTransformation = if (passVisible) VisualTransformation.None
-                                       else PasswordVisualTransformation(),
-                trailingIcon = {
-                    VaultIconButton(
-                        icon    = if (passVisible) Icons.Outlined.VisibilityOff
-                                  else Icons.Outlined.Visibility,
-                        onClick = { passVisible = !passVisible }
-                    )
-                }
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color     = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
             )
 
-            // Game toggle + animated fields (same as AddAccount)
-            GameAccountToggle(isGame = isGame, onToggle = viewModel::onIsGameChanged)
-
-            AnimatedVisibility(
-                visible = isGame,
-                enter   = expandVertically(tween(350, easing = EaseOutCubic)) + fadeIn(tween(300)),
-                exit    = shrinkVertically(tween(300)) + fadeOut(tween(250))
+            // Dynamic forms fields based on type
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Spacer(Modifier.height(0.dp))
-                    VaultTextField(value = gameName, onValueChange = viewModel::onGameNameChanged,
-                        label = "Game Name *", placeholder = "e.g. Valorant", leadingIcon = Icons.Outlined.SportsEsports)
-                    VaultTextField(value = gameId, onValueChange = viewModel::onGameIdChanged,
-                        label = "In-Game ID (optional)", leadingIcon = Icons.Outlined.Tag)
-                    VaultTextField(value = gameDescription, onValueChange = viewModel::onGameDescriptionChanged,
-                        label = "Description (optional)", placeholder = "e.g. Asia Server", leadingIcon = Icons.Outlined.Description)
+                when (entryType) {
+                    EntryType.LOGIN -> {
+                        VaultTextField(
+                            value         = platformLabel,
+                            onValueChange = viewModel::onPlatformLabelChanged,
+                            label         = "Account Label",
+                            placeholder   = "e.g. Personal Instagram",
+                            leadingIcon   = Icons.Outlined.Label
+                        )
+
+                        VaultTextField(
+                            value         = username,
+                            onValueChange = viewModel::onUsernameChanged,
+                            label         = "Username or Email *",
+                            placeholder   = "you@example.com or @username",
+                            leadingIcon   = Icons.Outlined.Person,
+                            isError       = uiState is AccountUiState.Error && username.isBlank(),
+                            errorMessage  = "Username or email is required"
+                        )
+
+                        VaultTextField(
+                            value         = password,
+                            onValueChange = viewModel::onPasswordChanged,
+                            label         = "Password *",
+                            leadingIcon   = Icons.Outlined.Lock,
+                            isError       = uiState is AccountUiState.Error && password.isBlank(),
+                            errorMessage  = "Password is required",
+                            visualTransformation = if (passVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                VaultIconButton(
+                                    icon    = if (passVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    onClick = { passVisible = !passVisible }
+                                )
+                            }
+                        )
+
+                        VaultTextField(
+                            value         = websiteUrl,
+                            onValueChange = viewModel::onWebsiteUrlChanged,
+                            label         = "Website URL (optional)",
+                            placeholder   = "https://example.com",
+                            leadingIcon   = Icons.Outlined.Link
+                        )
+                    }
+
+                    EntryType.CARD -> {
+                        CardPreview(
+                            cardNumber = cardNumber,
+                            cardHolder = cardHolder,
+                            cardExpiry = cardExpiry
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+
+                        VaultTextField(
+                            value         = platformLabel,
+                            onValueChange = viewModel::onPlatformLabelChanged,
+                            label         = "Card Label *",
+                            placeholder   = "e.g. Personal Visa",
+                            leadingIcon   = Icons.Outlined.Label,
+                            isError       = uiState is AccountUiState.Error && platformLabel.isBlank(),
+                            errorMessage  = "Card label is required"
+                        )
+
+                        VaultTextField(
+                            value         = cardHolder,
+                            onValueChange = viewModel::onCardHolderChanged,
+                            label         = "Cardholder Name",
+                            placeholder   = "JOHN DOE",
+                            leadingIcon   = Icons.Outlined.Person
+                        )
+
+                        VaultTextField(
+                            value         = cardNumber,
+                            onValueChange = { val clean = it.filter { c -> c.isDigit() }.take(16); viewModel.onCardNumberChanged(clean) },
+                            label         = "Card Number *",
+                            placeholder   = "0000 0000 0000 0000",
+                            leadingIcon   = Icons.Outlined.CreditCard,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            isError       = uiState is AccountUiState.Error && cardNumber.isBlank(),
+                            errorMessage  = "Card number is required"
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            VaultTextField(
+                                value         = cardExpiry,
+                                onValueChange = {
+                                    var clean = it.replace("/", "").filter { c -> c.isDigit() }.take(4)
+                                    if (clean.length > 2) {
+                                        clean = clean.substring(0, 2) + "/" + clean.substring(2)
+                                    }
+                                    viewModel.onCardExpiryChanged(clean)
+                                },
+                                label         = "Expiry (MM/YY)",
+                                placeholder   = "MM/YY",
+                                leadingIcon   = Icons.Outlined.CalendarToday,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier      = Modifier.weight(1f)
+                            )
+
+                            VaultTextField(
+                                value         = cardCvv,
+                                onValueChange = { viewModel.onCardCvvChanged(it.filter { c -> c.isDigit() }.take(4)) },
+                                label         = "CVV",
+                                placeholder   = "000",
+                                leadingIcon   = Icons.Outlined.Pin,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier      = Modifier.weight(1f)
+                            )
+                        }
+
+                        VaultTextField(
+                            value         = cardPin,
+                            onValueChange = { viewModel.onCardPinChanged(it.filter { c -> c.isDigit() }.take(6)) },
+                            label         = "Card PIN (optional)",
+                            placeholder   = "0000",
+                            leadingIcon   = Icons.Outlined.Lock,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
+
+                    EntryType.NOTE -> {
+                        VaultTextField(
+                            value         = platformLabel,
+                            onValueChange = viewModel::onPlatformLabelChanged,
+                            label         = "Note Title *",
+                            placeholder   = "e.g. WiFi Password, Lockbox Code",
+                            leadingIcon   = Icons.Outlined.Label,
+                            isError       = uiState is AccountUiState.Error && platformLabel.isBlank(),
+                            errorMessage  = "Note title is required"
+                        )
+
+                        VaultTextField(
+                            value         = noteContent,
+                            onValueChange = viewModel::onNoteContentChanged,
+                            label         = "Note Content *",
+                            placeholder   = "Type your secure note here...",
+                            leadingIcon   = Icons.Outlined.Description,
+                            singleLine    = false,
+                            maxLines      = 10,
+                            isError       = uiState is AccountUiState.Error && noteContent.isBlank(),
+                            errorMessage  = "Note content is required"
+                        )
+                    }
+
+                    EntryType.GAME -> {
+                        VaultTextField(
+                            value         = platformLabel,
+                            onValueChange = viewModel::onPlatformLabelChanged,
+                            label         = "Account Nickname *",
+                            placeholder   = "e.g. My Main Account",
+                            leadingIcon   = Icons.Outlined.Label,
+                            isError       = uiState is AccountUiState.Error && platformLabel.isBlank(),
+                            errorMessage  = "Nickname is required"
+                        )
+
+                        VaultTextField(
+                            value         = gameName,
+                            onValueChange = viewModel::onGameNameChanged,
+                            label         = "Game Name *",
+                            placeholder   = "e.g. Valorant",
+                            leadingIcon   = Icons.Outlined.SportsEsports,
+                            isError       = uiState is AccountUiState.Error && gameName.isBlank(),
+                            errorMessage  = "Game name is required"
+                        )
+
+                        VaultTextField(
+                            value         = gameId,
+                            onValueChange = viewModel::onGameIdChanged,
+                            label         = "In-Game ID (optional)",
+                            placeholder   = "e.g. Player#1234",
+                            leadingIcon   = Icons.Outlined.Tag
+                        )
+
+                        VaultTextField(
+                            value         = password,
+                            onValueChange = viewModel::onPasswordChanged,
+                            label         = "Password *",
+                            leadingIcon   = Icons.Outlined.Lock,
+                            isError       = uiState is AccountUiState.Error && password.isBlank(),
+                            errorMessage  = "Password is required",
+                            visualTransformation = if (passVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                VaultIconButton(
+                                    icon    = if (passVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    onClick = { passVisible = !passVisible }
+                                )
+                            }
+                        )
+
+                        VaultTextField(
+                            value         = gameDescription,
+                            onValueChange = viewModel::onGameDescriptionChanged,
+                            label         = "Description (optional)",
+                            placeholder   = "e.g. Asia Server",
+                            leadingIcon   = Icons.Outlined.Description
+                        )
+                    }
                 }
             }
 
             AnimatedVisibility(visible = uiState is AccountUiState.Error) {
-                ErrorBanner(message = (uiState as? AccountUiState.Error)?.message ?: "")
+                val msg = (uiState as? AccountUiState.Error)?.message ?: ""
+                com.vaultx.user.presentation.ui.auth.ErrorBanner(message = msg)
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            val isFormValid = when (entryType) {
+                EntryType.LOGIN -> username.isNotEmpty() && password.isNotEmpty()
+                EntryType.CARD -> platformLabel.isNotEmpty() && cardNumber.isNotEmpty()
+                EntryType.NOTE -> platformLabel.isNotEmpty() && noteContent.isNotEmpty()
+                EntryType.GAME -> platformLabel.isNotEmpty() && gameName.isNotEmpty() && password.isNotEmpty()
             }
 
             VaultButton(
@@ -151,45 +385,10 @@ fun EditAccountScreen(
                     }
                 },
                 isLoading = isLoading,
-                enabled   = password.isNotEmpty()
+                enabled   = isFormValid
             )
 
             Spacer(Modifier.height(32.dp))
         }
     }
 }
-
-// Re-use the composable from AddAccountScreen file scope
-@Composable
-private fun GameAccountToggle(isGame: Boolean, onToggle: (Boolean) -> Unit) {
-    Surface(
-        shape    = ShapeCard,
-        color    = if (isGame) PlatformGame.copy(alpha = 0.08f)
-                   else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier              = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.CenterVertically
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.SportsEsports, null,
-                    tint = if (isGame) PlatformGame else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp))
-                Text("Game Account", style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface)
-            }
-            Switch(
-                checked = isGame, onCheckedChange = onToggle,
-                colors  = SwitchDefaults.colors(
-                    checkedTrackColor = PlatformGame,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                )
-            )
-        }
-    }
-}
-
-private val EaseOutCubic = androidx.compose.animation.core.CubicBezierEasing(0.33f, 1f, 0.68f, 1f)

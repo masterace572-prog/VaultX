@@ -1,9 +1,9 @@
 {
-  "versionCode": 12,
-  "versionName": "2.4.0",
-  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.4.0/VaultX-User-v2.4.0.apk",
+  "versionCode": 13,
+  "versionName": "2.5.0",
+  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.5.0/VaultX-User-v2.5.0.apk",
   "changelog": [
-    "Ultimate Bento Grid home dashboard layout, adaptive navigation (phone/tablet/desktop), global command palette, and modal bottom sheet form inputs."
+    "Redesigned multi-type Add/Edit forms (Login, Card, Note, Game) using segmented control tab selectors, dynamic Credit Card visual preview, and spring-animated layouts."
   ],
   "forcedUpdate": false
 }
