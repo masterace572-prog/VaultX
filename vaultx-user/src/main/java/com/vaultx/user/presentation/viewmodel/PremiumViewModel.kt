@@ -81,6 +81,67 @@ class PremiumViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
+
+    private val _appliedPromo = MutableStateFlow<com.vaultx.user.data.model.PromoCode?>(null)
+    val appliedPromo: StateFlow<com.vaultx.user.data.model.PromoCode?> = _appliedPromo.asStateFlow()
+
+    private val _promoError = MutableStateFlow<String?>(null)
+    val promoError: StateFlow<String?> = _promoError.asStateFlow()
+
+    fun applyPromoCode(code: String) {
+        viewModelScope.launch {
+            _promoError.value = null
+            runCatching {
+                val doc = firestore.collection("promo_codes").document(code.uppercase()).get().await()
+                if (doc.exists() && doc.getBoolean("isActive") == true) {
+                    val maxUses = doc.getLong("maxUses")?.toInt() ?: 100
+                    val currentUses = doc.getLong("currentUses")?.toInt() ?: 0
+                    if (currentUses < maxUses) {
+                        _appliedPromo.value = com.vaultx.user.data.model.PromoCode(
+                            id = doc.id,
+                            code = doc.getString("code") ?: "",
+                            discountPercent = doc.getDouble("discountPercent"),
+                            freePlanId = doc.getString("freePlanId"),
+                            maxUses = maxUses,
+                            currentUses = currentUses,
+                            isActive = true
+                        )
+                    } else {
+                        _promoError.value = "Promo code has reached its usage limit."
+                    }
+                } else {
+                    _promoError.value = "Invalid or expired promo code."
+                }
+            }.onFailure {
+                _promoError.value = "Error validating promo code."
+            }
+        }
+    }
+
+    fun submitFreePromoCode(promo: com.vaultx.user.data.model.PromoCode, planToGrant: Plan, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            runCatching {
+                val uid = firebaseAuth.currentUser?.uid ?: throw IllegalStateException("Not logged in")
+                val currentExpiry = firestore.collection("users").document(uid).get().await().getLong("premium_expiry") ?: System.currentTimeMillis()
+                val newExpiry = maxOf(currentExpiry, System.currentTimeMillis()) + (planToGrant.durationDays * 86_400_000L)
+                
+                firestore.collection("users").document(uid).update(
+                    mapOf(
+                        "tier" to "premium",
+                        "premium_expiry" to newExpiry
+                    )
+                ).await()
+
+                firestore.collection("promo_codes").document(promo.id).update(
+                    "currentUses", promo.currentUses + 1
+                ).await()
+
+                onResult(true, "Promo applied! You are now premium.")
+            }.onFailure { e ->
+                onResult(false, e.message ?: "Failed to apply free promo code")
+            }
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

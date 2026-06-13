@@ -77,7 +77,8 @@ fun PaymentApprovalsScreen(
                                 onApprove = { 
                                     val plan = viewModel.plans.value.find { it.id == payment.planId }
                                     val days = plan?.durationDays ?: 30
-                                    viewModel.approvePayment(payment.paymentId, payment.uid, days) { _, msg ->
+                                    val planName = plan?.name ?: "Premium"
+                                    viewModel.approvePayment(payment.paymentId, payment.uid, days, planName) { _, msg ->
                                         android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
                                     }
                                 },
