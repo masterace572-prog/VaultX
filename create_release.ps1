@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$token = "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"
+$token = "YOUR_GITHUB_TOKEN_HERE"
 $repo = "masterace572-prog/VaultX"
 $headers = @{ "Authorization" = "token $token"; "Accept" = "application/vnd.github.v3+json" }
 
