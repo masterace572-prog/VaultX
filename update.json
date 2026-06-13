@@ -1,7 +1,7 @@
 {
   "versionCode": 5,
   "versionName": "2.0.0",
-  "downloadUrl": "https://github.com/masterace572-prog/VaultX/raw/main/VaultX-User-v2.0.0.apk",
+  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.0.0/VaultX-User-v2.0.0.apk",
   "changelog": [
     "iOS style premium UI overhaul",
     "Fixed Android 12+ splash screen stuck bug",
