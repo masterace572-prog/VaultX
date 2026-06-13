@@ -7,7 +7,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.em
 import androidx.compose.material3.Typography
-import com.vaultx.user.R
+import com.vaultx.admin.R
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VaultX Typography
