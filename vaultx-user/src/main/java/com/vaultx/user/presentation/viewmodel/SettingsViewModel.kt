@@ -119,6 +119,17 @@ class SettingsViewModel @Inject constructor(
     fun setCloudSync(enabled: Boolean) { 
         _cloudSyncEnabled.value = enabled 
         prefs.edit().putBoolean("pref_cloud_sync_enabled", enabled).apply()
+        if (enabled) {
+            viewModelScope.launch {
+                _isSyncing.value = true
+                accountRepository.syncFromCloud()
+                accountRepository.syncToCloud()
+                prefs.edit().putLong("last_backup_timestamp", System.currentTimeMillis()).apply()
+                val date = java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(System.currentTimeMillis()))
+                _lastBackupTime.value = date
+                _isSyncing.value = false
+            }
+        }
     }
 
     fun setScreenshotProtection(enabled: Boolean) {
@@ -129,6 +140,7 @@ class SettingsViewModel @Inject constructor(
     fun syncNow() {
         viewModelScope.launch {
             _isSyncing.value = true
+            accountRepository.syncFromCloud()
             accountRepository.syncToCloud()
             prefs.edit().putLong("last_backup_timestamp", System.currentTimeMillis()).apply()
             val date = java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(System.currentTimeMillis()))

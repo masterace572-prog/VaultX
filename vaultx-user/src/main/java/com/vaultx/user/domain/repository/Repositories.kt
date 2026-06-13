@@ -32,6 +32,7 @@ interface AccountRepository {
     suspend fun deleteAccount(id: String): Result<Unit>
     suspend fun countAccounts(): Int
     suspend fun syncToCloud(): Result<Unit>
+    suspend fun syncFromCloud(): Result<Unit>
 }
 
 interface AppConfigRepository {

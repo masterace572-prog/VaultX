@@ -179,6 +179,50 @@ class AccountRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun syncFromCloud(): Result<Unit> = runCatching {
+        val uid = authRepository.currentUid ?: return@runCatching
+        val dao = vaultSession.database.accountEntryDao()
+
+        val snapshot = firestore.collection("vaults")
+            .document(uid)
+            .collection("entries")
+            .get()
+            .await()
+
+        snapshot.documents.forEach { doc ->
+            val id = doc.getString("entry_id") ?: return@forEach
+            val encryptedBlob = doc.getString("encrypted_blob") ?: return@forEach
+            val iv = doc.getString("iv") ?: return@forEach
+            val updatedAt = doc.getLong("updated_at") ?: 0L
+            val platformHint = doc.getString("platform_hint") ?: "custom"
+
+            val localEntity = dao.getById(id)
+            if (localEntity == null || updatedAt > localEntity.updatedAt) {
+                try {
+                    val key = resolveKey()
+                    val jsonStr = cryptoManager.decrypt(EncryptedData(encryptedBlob, iv), key)
+                    val accountEntry = json.decodeFromString<AccountEntry>(jsonStr)
+
+                    val entityToSave = AccountEntryEntity(
+                        id = id,
+                        platformType = accountEntry.platformType.key,
+                        platformLabel = accountEntry.platformLabel,
+                        encryptedBlob = encryptedBlob,
+                        iv = iv,
+                        isGameAccount = accountEntry.gameAccount != null,
+                        isFavorite = accountEntry.isFavorite,
+                        createdAt = accountEntry.createdAt,
+                        updatedAt = accountEntry.updatedAt,
+                        isSynced = true
+                    )
+                    dao.upsert(entityToSave)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     private suspend fun triggerAutoSync() {
         val isCloudSyncEnabled = encryptedPrefs.getBoolean("pref_cloud_sync_enabled", false)
         if (isCloudSyncEnabled) {
