@@ -38,7 +38,6 @@ data class AccountEntry(
 data class GameAccountDetails(
     val gameName: String = "",
     val inGameId: String? = null,
-    val email: String? = null,
     val description: String? = null
 )
 

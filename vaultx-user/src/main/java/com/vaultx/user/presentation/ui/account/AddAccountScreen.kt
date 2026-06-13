@@ -39,7 +39,6 @@ fun AddAccountScreen(
     val isGame         by viewModel.formIsGame.collectAsState()
     val gameName       by viewModel.formGameName.collectAsState()
     val gameId         by viewModel.formGameId.collectAsState()
-    val gameEmail      by viewModel.formGameEmail.collectAsState()
     val gameDescription by viewModel.formGameDescription.collectAsState()
     val uiState        by viewModel.uiState.collectAsState()
 
@@ -101,18 +100,16 @@ fun AddAccountScreen(
                 color     = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
             )
 
-            if (!isGame) {
-                // ── Username / email (at least one required) ────────────────
-                VaultTextField(
-                    value         = username,
-                    onValueChange = viewModel::onUsernameChanged,
-                    label         = "Username or Email *",
-                    placeholder   = "you@example.com or @username",
-                    leadingIcon   = Icons.Outlined.Person,
-                    isError       = uiState is AccountUiState.Error && username.isBlank(),
-                    errorMessage  = if (uiState is AccountUiState.Error && username.isBlank()) "Username or email is required" else null
-                )
-            }
+            // ── Username / email (at least one required) ────────────────
+            VaultTextField(
+                value         = username,
+                onValueChange = viewModel::onUsernameChanged,
+                label         = "Username or Email *",
+                placeholder   = "you@example.com or @username",
+                leadingIcon   = Icons.Outlined.Person,
+                isError       = uiState is AccountUiState.Error && username.isBlank(),
+                errorMessage  = if (uiState is AccountUiState.Error && username.isBlank()) "Username or email is required" else null
+            )
 
             // ── Password row ──────────────────────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -168,13 +165,6 @@ fun AddAccountScreen(
                         onValueChange = viewModel::onGameIdChanged,
                         label         = "In-Game ID (optional)",
                         leadingIcon   = Icons.Outlined.Tag
-                    )
-                    VaultTextField(
-                        value         = gameEmail,
-                        onValueChange = viewModel::onGameEmailChanged,
-                        label         = "Email (optional)",
-                        placeholder   = "Email used for this game account",
-                        leadingIcon   = Icons.Outlined.Email
                     )
                     VaultTextField(
                         value         = gameDescription,
