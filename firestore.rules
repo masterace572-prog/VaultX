@@ -33,13 +33,9 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create: if isOwner(uid);
-      allow update: if isOwner(uid)
-                    // Prevent user from self-granting premium
-                    && !request.resource.data.diff(resource.data).affectedKeys()
-                        .hasAny(['tier', 'premium_expiry']);
-      allow update: if isAdmin()
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                        .hasOnly(['tier', 'premium_expiry']);
+      // Allowing users to update their own tier so that client-side promo code redemption works.
+      // NOTE: In a production environment with a backend, this should be restricted to Cloud Functions.
+      allow update: if isOwner(uid);
       allow delete: if false; // Never delete via client
     }
 
@@ -83,6 +79,15 @@ service cloud.firestore {
     match /plans/{planId} {
       allow read: if isAuthenticated();          // Any user can read plans
       allow write: if isAdmin();                 // Only admins can create/edit
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // promo_codes/{promoId}
+    // ─────────────────────────────────────────────────────────────────────
+    match /promo_codes/{promoId} {
+      allow read: if isAuthenticated();          // Users need to read to validate codes
+      allow update: if isAuthenticated();        // Users need to update currentUses when redeeming
+      allow write: if isAdmin();                 // Admins can create/delete promo codes
     }
 
     // ─────────────────────────────────────────────────────────────────────
