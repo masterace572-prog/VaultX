@@ -33,7 +33,7 @@ fun VaultButton(
 ) {
     val buttonModifier = modifier.then(
         if (fullWidth) Modifier.fillMaxWidth() else Modifier
-    ).height(52.dp)
+    ).height(44.dp)
 
     when (variant) {
         VaultButtonVariant.Primary -> {
@@ -49,7 +49,7 @@ fun VaultButton(
                     disabledContentColor   = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
                 ),
                 elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 0.dp,
+                    defaultElevation = 2.dp,
                     pressedElevation = 0.dp,
                 )
             ) {

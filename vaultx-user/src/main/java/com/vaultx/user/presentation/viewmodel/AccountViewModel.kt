@@ -63,6 +63,7 @@ class AccountViewModel @Inject constructor(
     private val _formIsGame        = MutableStateFlow(false)
     private val _formGameName      = MutableStateFlow("")
     private val _formGameId        = MutableStateFlow("")
+    private val _formGameEmail     = MutableStateFlow("")
     private val _formGameDescription= MutableStateFlow("")
 
     val formPlatformType:  StateFlow<PlatformType> = _formPlatformType.asStateFlow()
@@ -74,6 +75,7 @@ class AccountViewModel @Inject constructor(
     val formIsGame:        StateFlow<Boolean>       = _formIsGame.asStateFlow()
     val formGameName:      StateFlow<String>        = _formGameName.asStateFlow()
     val formGameId:        StateFlow<String>        = _formGameId.asStateFlow()
+    val formGameEmail:     StateFlow<String>        = _formGameEmail.asStateFlow()
     val formGameDescription:StateFlow<String>       = _formGameDescription.asStateFlow()
 
     // ── Form handlers ─────────────────────────────────────────────────────────
@@ -110,6 +112,7 @@ class AccountViewModel @Inject constructor(
     }
     fun onGameNameChanged(v: String)       { _formGameName.value = v }
     fun onGameIdChanged(v: String)         { _formGameId.value = v }
+    fun onGameEmailChanged(v: String)      { _formGameEmail.value = v }
     fun onGameDescriptionChanged(v: String){ _formGameDescription.value = v }
 
     // ── CRUD operations ───────────────────────────────────────────────────────
@@ -198,6 +201,7 @@ class AccountViewModel @Inject constructor(
             entry.gameAccount?.let { g ->
                 _formGameName.value       = g.gameName
                 _formGameId.value         = g.inGameId ?: ""
+                _formGameEmail.value      = g.email ?: ""
                 _formGameDescription.value= g.description ?: ""
             }
         }
@@ -213,6 +217,7 @@ class AccountViewModel @Inject constructor(
         _formIsGame.value        = false
         _formGameName.value      = ""
         _formGameId.value        = ""
+        _formGameEmail.value     = ""
         _formGameDescription.value= ""
         _uiState.value           = AccountUiState.Idle
         _selectedAccount.value   = null
@@ -235,6 +240,7 @@ class AccountViewModel @Inject constructor(
         gameAccount   = if (_formIsGame.value) GameAccountDetails(
             gameName      = _formGameName.value,
             inGameId      = _formGameId.value.takeIf { it.isNotBlank() },
+            email         = _formGameEmail.value.takeIf { it.isNotBlank() },
             description   = _formGameDescription.value.takeIf { it.isNotBlank() }
         ) else null
     )

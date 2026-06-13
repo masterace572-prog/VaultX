@@ -109,10 +109,10 @@ fun VaultTextField(
             shape = ShapeInput,
             colors = OutlinedTextFieldDefaults.colors(
                 // Container
-                focusedContainerColor   = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                disabledContainerColor  = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
-                errorContainerColor     = MaterialTheme.colorScheme.error.copy(alpha = 0.05f),
+                focusedContainerColor   = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor  = Color.Transparent,
+                errorContainerColor     = Color.Transparent,
                 // Border — driven by animateColorAsState above
                 focusedBorderColor    = borderColor,
                 unfocusedBorderColor  = borderColor,
@@ -126,6 +126,7 @@ fun VaultTextField(
             textStyle = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .fillMaxWidth()
+                .height(56.dp)
                 .onFocusChanged { isFocused = it.isFocused }
         )
 

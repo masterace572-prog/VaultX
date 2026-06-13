@@ -40,6 +40,7 @@ fun EditAccountScreen(
     val isGame        by viewModel.formIsGame.collectAsState()
     val gameName      by viewModel.formGameName.collectAsState()
     val gameId        by viewModel.formGameId.collectAsState()
+    val gameEmail     by viewModel.formGameEmail.collectAsState()
     val gameDescription by viewModel.formGameDescription.collectAsState()
     val uiState       by viewModel.uiState.collectAsState()
 
@@ -137,6 +138,8 @@ fun EditAccountScreen(
                         label = "Game Name *", placeholder = "e.g. Valorant", leadingIcon = Icons.Outlined.SportsEsports)
                     VaultTextField(value = gameId, onValueChange = viewModel::onGameIdChanged,
                         label = "In-Game ID (optional)", leadingIcon = Icons.Outlined.Tag)
+                    VaultTextField(value = gameEmail, onValueChange = viewModel::onGameEmailChanged,
+                        label = "Email (optional)", placeholder = "Email used for this game account", leadingIcon = Icons.Outlined.Email)
                     VaultTextField(value = gameDescription, onValueChange = viewModel::onGameDescriptionChanged,
                         label = "Description (optional)", placeholder = "e.g. Asia Server", leadingIcon = Icons.Outlined.Description)
                 }

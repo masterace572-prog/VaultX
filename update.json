@@ -1,13 +1,11 @@
 {
-  "versionCode": 9,
-  "versionName": "2.2.2",
-  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.2.2/VaultX-User-v2.2.2.apk",
+  "versionCode": 10,
+  "versionName": "2.3.0",
+  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.3.0/VaultX-User-v2.3.0.apk",
   "changelog": [
-    "Added VaultX Promotional Website and Offline Decryptor",
-    "Added Help & Support Screen",
-    "Overhauled Admin UI entirely",
-    "Revamped Premium Screen with Promo Code feature directly embedded",
-    "Added comprehensive Toast messages on errors and successes"
+    "Premium Stripe-like UI Overhaul",
+    "Help & Support dynamic email routing",
+    "Added Email support for Game accounts"
   ],
   "forcedUpdate": false
 }

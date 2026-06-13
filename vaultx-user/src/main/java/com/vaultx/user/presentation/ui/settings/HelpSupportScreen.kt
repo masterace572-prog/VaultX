@@ -33,6 +33,7 @@ fun HelpSupportScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val supportEmail by viewModel.supportEmail.collectAsState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -110,7 +111,7 @@ fun HelpSupportScreen(
                 text = "Contact Us",
                 onClick = {
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:support@vaultx.com")
+                        data = Uri.parse("mailto:$supportEmail")
                         putExtra(Intent.EXTRA_SUBJECT, "VaultX Support Request")
                     }
                     try {

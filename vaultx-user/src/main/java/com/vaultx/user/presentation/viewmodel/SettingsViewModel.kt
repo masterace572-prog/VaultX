@@ -37,6 +37,7 @@ class SettingsViewModel @Inject constructor(
     private val _isSyncing          = MutableStateFlow(false)
     private val _lastBackupTime     = MutableStateFlow<String?>(null)
     private val _screenshotProtectionEnabled = MutableStateFlow(true)
+    private val _supportEmail       = MutableStateFlow("support@vaultx.com")
 
     val accountCount:       StateFlow<Int>     = _accountCount.asStateFlow()
     val cloudSyncEnabled:   StateFlow<Boolean> = _cloudSyncEnabled.asStateFlow()
@@ -48,6 +49,7 @@ class SettingsViewModel @Inject constructor(
     val isSyncing:          StateFlow<Boolean> = _isSyncing.asStateFlow()
     val lastBackupTime:     StateFlow<String?> = _lastBackupTime.asStateFlow()
     val screenshotProtectionEnabled: StateFlow<Boolean> = _screenshotProtectionEnabled.asStateFlow()
+    val supportEmail:       StateFlow<String>  = _supportEmail.asStateFlow()
 
     init {
         loadSettings()
@@ -78,6 +80,14 @@ class SettingsViewModel @Inject constructor(
                 val name = doc.getString("display_name")
                 if (!name.isNullOrBlank()) {
                     _userName.value = name
+                }
+            }
+            
+            runCatching {
+                val configDoc = firestore.collection("app_config").document("main").get().await()
+                val supportEmail = configDoc.getString("support_email")
+                if (!supportEmail.isNullOrBlank()) {
+                    _supportEmail.value = supportEmail
                 }
             }
             

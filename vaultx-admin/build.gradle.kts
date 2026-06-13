@@ -15,8 +15,8 @@ android {
         applicationId = "com.vaultx.admin"
         minSdk = 26
         targetSdk = 34
-        versionCode = 8
-        versionName = "2.2.2"
+        versionCode = 10
+        versionName = "2.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

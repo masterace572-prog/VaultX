@@ -39,6 +39,7 @@ fun AddAccountScreen(
     val isGame         by viewModel.formIsGame.collectAsState()
     val gameName       by viewModel.formGameName.collectAsState()
     val gameId         by viewModel.formGameId.collectAsState()
+    val gameEmail      by viewModel.formGameEmail.collectAsState()
     val gameDescription by viewModel.formGameDescription.collectAsState()
     val uiState        by viewModel.uiState.collectAsState()
 
@@ -167,6 +168,13 @@ fun AddAccountScreen(
                         onValueChange = viewModel::onGameIdChanged,
                         label         = "In-Game ID (optional)",
                         leadingIcon   = Icons.Outlined.Tag
+                    )
+                    VaultTextField(
+                        value         = gameEmail,
+                        onValueChange = viewModel::onGameEmailChanged,
+                        label         = "Email (optional)",
+                        placeholder   = "Email used for this game account",
+                        leadingIcon   = Icons.Outlined.Email
                     )
                     VaultTextField(
                         value         = gameDescription,

@@ -8,14 +8,14 @@ import androidx.compose.ui.graphics.Color
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Dark Mode Palette ─────────────────────────────────────────────────────────
-val DarkBackground        = Color(0xFF0B0B14)  // Deep midnight blue/black
-val DarkSurface           = Color(0xFF161625)  // Elevated deep blue-tinted card
+val DarkBackground        = Color(0xFF0A0A0A)  // Deep midnight blue/black
+val DarkSurface           = Color(0xFF171717)  // Elevated deep blue-tinted card
 val DarkSurfaceVariant    = Color(0xFF222236)  // Lighter surface
 val DarkSurfaceContainer  = Color(0xFF19192B)  // Container color
-val DarkOutline           = Color(0xFF383854)  // Subtle dividers
+val DarkOutline           = Color(0xFF27272A)  // Subtle dividers
 val DarkOutlineFocused    = Color(0xFF9D63FF)  // Active input border (Vibrant Purple)
 
-val DarkPrimary           = Color(0xFFFF528E)  // Vibrant Pink/Rose — brand accent
+val DarkPrimary           = Color(0xFF8B5CF6)  // Vibrant Pink/Rose — brand accent
 val DarkPrimaryVariant    = Color(0xFFD6316C)  // Pressed / hover state
 val DarkOnPrimary         = Color(0xFFFFFFFF)
 
@@ -34,14 +34,14 @@ val DarkBadgeFree         = Color(0xFF6A6A80)
 val DarkBadgePremium      = Color(0xFFFFD700)  // Gold
 
 // ── Light Mode Palette ────────────────────────────────────────────────────────
-val LightBackground       = Color(0xFFF8F8FC)  // Very light lavender/grey
+val LightBackground       = Color(0xFFFAFAFA)  // Very light lavender/grey
 val LightSurface          = Color(0xFFFFFFFF)  // Pure white cards
 val LightSurfaceVariant   = Color(0xFFEEEEF6)  // Very light grey with blue tint
 val LightSurfaceContainer = Color(0xFFF2F2F9)
-val LightOutline          = Color(0xFFC7C7D6)
+val LightOutline          = Color(0xFFE5E7EB)
 val LightOutlineFocused   = Color(0xFF7C3AED)  // Deep Purple
 
-val LightPrimary          = Color(0xFFE11D48)  // Deep Rose Pink
+val LightPrimary          = Color(0xFF7C3AED)  // Deep Rose Pink
 val LightPrimaryVariant   = Color(0xFFBE123C)
 val LightOnPrimary        = Color(0xFFFFFFFF)
 
