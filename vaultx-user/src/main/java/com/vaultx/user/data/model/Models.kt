@@ -13,6 +13,25 @@ import kotlinx.serialization.Serializable
  * All fields below live only in memory; never touch disk or network in plaintext.
  */
 @Serializable
+enum class EntryType {
+    LOGIN, GAME, NOTE, CARD
+}
+
+@Serializable
+data class SecureNoteDetails(
+    val noteContent: String = ""
+)
+
+@Serializable
+data class CardDetails(
+    val cardHolder: String = "",
+    val cardNumber: String = "",
+    val expiryDate: String = "",
+    val cvv: String = "",
+    val cardPin: String? = null
+)
+
+@Serializable
 data class AccountEntry(
     val id: String,
     val platformType: PlatformType,
@@ -21,9 +40,14 @@ data class AccountEntry(
     // Standard fields (all optional)
     val username: String? = null,
     val email: String? = null,
-    val password: String,               // PLAINTEXT — only in memory
+    val password: String = "",               // PLAINTEXT — only in memory
     val websiteUrl: String = "",
     val appPackageName: String = "",
+
+    // Redesign extensions
+    val entryType: EntryType = EntryType.LOGIN,
+    val secureNote: SecureNoteDetails? = null,
+    val paymentCard: CardDetails? = null,
 
     // Game-specific fields
     val gameAccount: GameAccountDetails? = null,

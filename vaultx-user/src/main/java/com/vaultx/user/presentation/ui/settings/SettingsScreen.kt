@@ -38,6 +38,7 @@ fun SettingsScreen(
     onNavigateToAppLockSetup: () -> Unit,
     onNavigateToPremium: () -> Unit,
     onNavigateToHelpSupport: () -> Unit,
+    showBackButton:      Boolean = true,
     appViewModel:    AppViewModel    = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -71,8 +72,10 @@ fun SettingsScreen(
             TopAppBar(
                 title = { Text("Settings", style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, "Back")
+                    if (showBackButton) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Outlined.ArrowBack, "Back")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -1,9 +1,9 @@
 {
-  "versionCode": 11,
-  "versionName": "2.3.1",
-  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.3.1/VaultX-User-v2.3.1.apk",
+  "versionCode": 12,
+  "versionName": "2.4.0",
+  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.4.0/VaultX-User-v2.4.0.apk",
   "changelog": [
-    "Premium UI Enhancements. Introducing ultra-premium animations, material you theming, shimmer loading, spring physics, and contextual card glows."
+    "Ultimate Bento Grid home dashboard layout, adaptive navigation (phone/tablet/desktop), global command palette, and modal bottom sheet form inputs."
   ],
   "forcedUpdate": false
 }

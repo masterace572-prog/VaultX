@@ -2,35 +2,50 @@ package com.vaultx.user.presentation.ui.home
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.vaultx.user.data.model.AccountEntry
 import com.vaultx.user.data.model.AppConfig
-import com.vaultx.user.data.model.PlatformType
-import com.vaultx.user.data.model.UserTier
+import com.vaultx.user.data.model.EntryType
 import com.vaultx.user.presentation.theme.*
 import com.vaultx.user.presentation.ui.components.*
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.composed
 import com.vaultx.user.presentation.viewmodel.AccountViewModel
 import com.vaultx.user.presentation.viewmodel.HomeViewModel
+import com.vaultx.user.presentation.viewmodel.SettingsViewModel
 import kotlinx.coroutines.delay
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HomeScreen — dynamic header, announcement animation, account list
-// ─────────────────────────────────────────────────────────────────────────────
+import kotlinx.coroutines.flow.StateFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,313 +55,624 @@ fun HomeScreen(
     onNavigateToSearch:   () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToPremium:  () -> Unit,
+    onNavigateToVault:    () -> Unit = {},
+    onNavigateToSecurity: () -> Unit = {},
     accountViewModel: AccountViewModel = hiltViewModel(),
     homeViewModel:    HomeViewModel    = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val accounts     by accountViewModel.accounts.collectAsState()
-    val userProfile  by homeViewModel.userProfile.collectAsState()
-    val appConfig    by homeViewModel.appConfig.collectAsState()
-    val isLoading    by homeViewModel.isLoading.collectAsState()
-    val isRefreshing by homeViewModel.isLoading.collectAsState()
+    val accountsState = accountViewModel.accounts.collectAsState()
+    val accounts = accountsState.value
+    val userProfileState = homeViewModel.userProfile.collectAsState()
+    val userProfile = userProfileState.value
+    val appConfigState = homeViewModel.appConfig.collectAsState()
+    val appConfig = appConfigState.value
+    val isLoadingState = homeViewModel.isLoading.collectAsState()
+    val isLoading = isLoadingState.value
+    val isRefreshingState = homeViewModel.isLoading.collectAsState()
+    val isRefreshing = isRefreshingState.value
+
+    // Sync state from settings view model
+    val cloudSyncEnabledState = settingsViewModel.cloudSyncEnabled.collectAsState()
+    val cloudSyncEnabled = cloudSyncEnabledState.value
+    val lastBackupTimeState = settingsViewModel.lastBackupTime.collectAsState()
+    val lastBackupTime = lastBackupTimeState.value
+    val isSyncingState = settingsViewModel.isSyncing.collectAsState()
+    val isSyncing = isSyncingState.value
 
     val listState = rememberLazyListState()
+    val haptic = LocalHapticFeedback.current
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            HomeTopBar(
-                userProfile        = userProfile,
-                appConfig          = appConfig,
-                onSettingsClick    = onNavigateToSettings,
-                onPremiumClick     = onNavigateToPremium,
-                onSearchClick      = onNavigateToSearch,
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick           = onNavigateToAdd,
-                expanded          = listState.isScrollingUp(),
-                icon              = { Icon(Icons.Outlined.Add, contentDescription = "Add account") },
-                text              = { Text("Add") },
-                containerColor    = MaterialTheme.colorScheme.primary,
-                contentColor      = MaterialTheme.colorScheme.onPrimary,
-                shape             = ShapeFull,
-                elevation         = FloatingActionButtonDefaults.elevation(0.dp, 0.dp)
-            )
-        }
-    ) { padding ->
-        if (isLoading && accounts.isEmpty()) {
-            // Shimmer skeleton while loading
-            LazyColumn(
-                modifier            = Modifier.fillMaxSize().padding(padding),
-                contentPadding      = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                items(5) { ShimmerAccountCard() }
-            }
-        } else if (accounts.isEmpty()) {
-            androidx.compose.material3.pulltorefresh.PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { homeViewModel.refresh() },
-                modifier = Modifier.fillMaxSize().padding(padding)
-            ) {
-                Box(
-                    modifier           = Modifier.fillMaxSize(),
-                    contentAlignment   = Alignment.Center
-                ) {
-                    EmptyVaultState()
-                }
-            }
-        } else {
-            androidx.compose.material3.pulltorefresh.PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { homeViewModel.refresh() },
-                modifier = Modifier.fillMaxSize().padding(padding)
-            ) {
-                LazyColumn(
-                    state               = listState,
-                    modifier            = Modifier.fillMaxSize(),
-                    contentPadding      = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // ── Premium Upgrade Banner for Free Users ──
-                    if (userProfile?.isPremium == false) {
-                        item {
-                            PremiumUpgradeBanner(onClick = onNavigateToPremium)
-                            Spacer(Modifier.height(8.dp))
-                        }
-                    }
+    var showCommandPalette by remember { mutableStateOf(false) }
+    var showPremiumDetailsDialog by remember { mutableStateOf(false) }
 
-                    // Group by platform type
-                    val grouped = accounts.groupBy { it.platformType }
-                    grouped.forEach { (type, entries) ->
-                        item(key = "header_${type.key}") {
-                            SectionHeader(title = type.displayName.uppercase())
-                        }
-                        items(entries, key = { it.id }) { entry ->
-                            val dismissState = rememberSwipeToDismissBoxState(
-                                confirmValueChange = { false } // Keep it strictly visual for now, let it bounce back with spring physics
-                            )
-                            SwipeToDismissBox(
-                                state = dismissState,
-                                enableDismissFromStartToEnd = false,
-                                enableDismissFromEndToStart = true,
-                                backgroundContent = {
-                                    val color by animateColorAsState(
-                                        if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) 
-                                            MaterialTheme.colorScheme.errorContainer 
-                                        else 
-                                            androidx.compose.ui.graphics.Color.Transparent,
-                                        label = "bg_color"
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(color, ShapeCard)
-                                            .padding(horizontal = 24.dp),
-                                        contentAlignment = Alignment.CenterEnd
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Delete,
-                                            contentDescription = "Delete",
-                                            tint = if (color == androidx.compose.ui.graphics.Color.Transparent) 
-                                                       androidx.compose.ui.graphics.Color.Transparent 
-                                                   else 
-                                                       MaterialTheme.colorScheme.onErrorContainer
-                                        )
-                                    }
-                                }
-                            ) {
-                                AccountCard(
-                                    platformType  = entry.platformType,
-                                    platformLabel = entry.platformLabel,
-                                    subtitle      = entry.username
-                                        ?: entry.email?.maskEmail()
-                                        ?: "No identifier",
-                                    isFavorite    = entry.isFavorite,
-                                    isGameAccount = entry.gameAccount != null,
-                                    onClick       = { onNavigateToDetail(entry.id) }
-                                )
-                            }
-                            Spacer(Modifier.height(2.dp))
-                        }
-                        item(key = "spacer_${type.key}") { Spacer(Modifier.height(8.dp)) }
-                    }
-                    // Bottom padding for FAB
-                    item { Spacer(Modifier.height(72.dp)) }
-                }
+    // Computations for Bento Grid counts
+    val loginCount = remember(accounts) { accounts.count { it.entryType == EntryType.LOGIN } }
+    val gameCount = remember(accounts) { accounts.count { it.entryType == EntryType.GAME } }
+    val noteCount = remember(accounts) { accounts.count { it.entryType == EntryType.NOTE } }
+    val cardCount = remember(accounts) { accounts.count { it.entryType == EntryType.CARD } }
+
+    // Live local security score evaluation
+    val securityScore = remember(accounts) {
+        val logins = accounts.filter { it.password.isNotEmpty() }
+        if (logins.isEmpty()) 100 else {
+            var weak = 0
+            var reused = 0
+            val passCounts = logins.groupBy { it.password }.mapValues { it.value.size }
+            logins.forEach { entry ->
+                val isWeak = entry.password.length < 8 || entry.password.all { it.isLowerCase() } || entry.password.all { it.isDigit() }
+                if (isWeak) weak++
+                if ((passCounts[entry.password] ?: 1) > 1) reused++
             }
+            val weakRatio = weak.toFloat() / logins.size
+            val reusedRatio = reused.toFloat() / logins.size
+            (100 - (weakRatio * 40) - (reusedRatio * 40)).toInt().coerceIn(15, 100)
         }
     }
-}
 
-// ── Top bar with announcement crossfade animation ─────────────────────────────
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun HomeTopBar(
-    userProfile:     UserProfile?,
-    appConfig:       AppConfig?,
-    onSettingsClick: () -> Unit,
-    onPremiumClick:  () -> Unit,
-    onSearchClick:   () -> Unit,
-) {
-    // Announcement animation state
+    val recentEntries = remember(accounts) {
+        accounts.sortedByDescending { it.updatedAt }.take(3)
+    }
+
+    // TopBar announcement settles
     var showAnnouncement by remember { mutableStateOf(false) }
-    val hasAnnouncement = appConfig?.announcementActive == true &&
-                          appConfig.announcementText.isNotBlank()
+    val hasAnnouncement = appConfig?.announcementActive == true && appConfig.announcementText.isNotBlank()
 
     LaunchedEffect(hasAnnouncement) {
         if (hasAnnouncement) {
-            delay(800)              // Let screen settle
+            delay(800)
             showAnnouncement = true
-            delay(5_000)           // Hold announcement for 5s (as specified)
+            delay(5000)
             showAnnouncement = false
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            homeViewModel.refresh()
+        },
+        modifier = Modifier.fillMaxSize()
     ) {
-        Row(
-            modifier              = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.CenterVertically
-        ) {
-            // ── Welcome / Announcement crossfade ──────────────────────────────
-            AnimatedContent(
-                targetState  = showAnnouncement,
-                transitionSpec = {
-                    (slideInVertically { it } + fadeIn(tween(500)))
-                        .togetherWith(slideOutVertically { -it } + fadeOut(tween(400)))
-                },
-                modifier = Modifier.weight(1f),
-                label    = "header_content"
-            ) { isAnnouncement ->
-                if (isAnnouncement && appConfig != null) {
-                    WelcomeHeader(
-                        title = "Announcement",
-                        titleColor = MaterialTheme.colorScheme.primary,
-                        subtitle = appConfig.announcementText,
-                        isPremium = userProfile?.isPremium ?: false,
-                        planName = userProfile?.planName,
-                        daysLeft = userProfile?.daysLeft,
-                        onPremiumClick = onPremiumClick
-                    )
-                } else {
-                    WelcomeHeader(
-                        title = "Welcome back,",
-                        titleColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        subtitle = userProfile?.displayName ?: "there",
-                        isPremium = userProfile?.isPremium ?: false,
-                        planName = userProfile?.planName,
-                        daysLeft = userProfile?.daysLeft,
-                        onPremiumClick = onPremiumClick
-                    )
-                }
-            }
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AnimatedContent(
+                            targetState = showAnnouncement,
+                            transitionSpec = {
+                                (slideInVertically { it } + fadeIn(tween(500)))
+                                    .togetherWith(slideOutVertically { -it } + fadeOut(tween(400)))
+                            },
+                            modifier = Modifier.weight(1f),
+                            label = "header_content"
+                        ) { isAnnouncement ->
+                            if (isAnnouncement && appConfig != null) {
+                                WelcomeHeader(
+                                    title = "Announcement",
+                                    titleColor = MaterialTheme.colorScheme.primary,
+                                    subtitle = appConfig.announcementText,
+                                    userProfile = userProfile,
+                                    onPremiumClick = { showPremiumDetailsDialog = true }
+                                )
+                            } else {
+                                WelcomeHeader(
+                                    title = "Welcome back,",
+                                    titleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    subtitle = userProfile?.displayName ?: "there",
+                                    userProfile = userProfile,
+                                    onPremiumClick = { showPremiumDetailsDialog = true }
+                                )
+                            }
+                        }
 
-            // ── Action buttons ────────────────────────────────────────────────
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                IconButton(onClick = onSearchClick) {
-                    Icon(
-                        Icons.Outlined.Search,
-                        "Search",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            IconButton(onClick = { showCommandPalette = true }) {
+                                Icon(Icons.Outlined.Search, "Command Palette", tint = MaterialTheme.colorScheme.onBackground)
+                            }
+                            IconButton(onClick = onNavigateToSettings) {
+                                Icon(Icons.Outlined.Settings, "Settings", tint = MaterialTheme.colorScheme.onBackground)
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
                 }
-                IconButton(onClick = onSettingsClick) {
-                    Icon(
-                        Icons.Outlined.Settings,
-                        "Settings",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+            },
+            floatingActionButton = {
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToAdd,
+                    expanded = listState.isScrollingUp(),
+                    icon = { Icon(Icons.Outlined.Add, contentDescription = "Add account") },
+                    text = { Text("Add Item") },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = ShapeFull,
+                    elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp)
+                )
+            }
+        ) { padding ->
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // ── Premium Banner ──
+                if (userProfile?.isPremium == false) {
+                    item {
+                        PremiumUpgradeBanner(onClick = onNavigateToPremium)
+                    }
                 }
+
+                // ── Bento Grid Section ──
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Password Vault Card (Large - 2/3)
+                            BentoCard(
+                                modifier = Modifier.weight(2f),
+                                onClick = onNavigateToVault
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Icon(
+                                        Icons.Outlined.Lock,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "$loginCount",
+                                            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "Password Vault",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Security Score Card (1/3)
+                            BentoCard(
+                                modifier = Modifier.weight(1f),
+                                onClick = onNavigateToSecurity
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    val scoreColor = when {
+                                        securityScore >= 80 -> AccentGreenLight
+                                        securityScore >= 50 -> AccentOrangeLight
+                                        else -> AccentRedLight
+                                    }
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.size(54.dp)
+                                    ) {
+                                        Canvas(modifier = Modifier.size(48.dp)) {
+                                            drawCircle(
+                                                color = scoreColor.copy(alpha = 0.12f),
+                                                style = Stroke(width = 4.dp.toPx())
+                                            )
+                                            drawArc(
+                                                color = scoreColor,
+                                                startAngle = -90f,
+                                                sweepAngle = (securityScore * 3.6f),
+                                                useCenter = false,
+                                                style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
+                                            )
+                                        }
+                                        Text(
+                                            text = "$securityScore",
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    Text(
+                                        text = "Security",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
+                        // Middle row: Game accounts + Secure notes
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            BentoCard(
+                                modifier = Modifier.weight(1f),
+                                onClick = onNavigateToVault
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.SportsEsports,
+                                        null,
+                                        tint = PlatformGame,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "$gameCount",
+                                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "Games",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
+                            BentoCard(
+                                modifier = Modifier.weight(1f),
+                                onClick = onNavigateToVault
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Description,
+                                        null,
+                                        tint = AccentPurpleDark,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "$noteCount",
+                                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "Notes",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Third row: Payment Cards + Backup Status
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            BentoCard(
+                                modifier = Modifier.weight(1f),
+                                onClick = onNavigateToVault
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.CreditCard,
+                                        null,
+                                        tint = AccentBlueLight,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "$cardCount",
+                                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = "Cards",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Sync Card (Small / Interactive)
+                            BentoCard(
+                                modifier = Modifier.weight(1f),
+                                onClick = { settingsViewModel.syncNow() }
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        if (isSyncing) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(22.dp),
+                                                strokeWidth = 2.dp,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        } else {
+                                            Icon(
+                                                Icons.Outlined.Sync,
+                                                null,
+                                                tint = if (cloudSyncEnabled) AccentGreenLight else AccentOrangeLight,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                    }
+                                    Column {
+                                        Text(
+                                            text = if (isSyncing) "Syncing" else if (cloudSyncEnabled) "Cloud Active" else "Local Only",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold, fontSize = 14.sp),
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = lastBackupTime ?: "Sync Now",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── Recent Activity Section ──
+                if (recentEntries.isNotEmpty()) {
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SectionHeader(title = "RECENT ACTIVITY")
+                            Surface(
+                                shape = ShapeCard,
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column {
+                                    recentEntries.forEachIndexed { index, entry ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { onNavigateToDetail(entry.id) }
+                                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            PlatformIcon(type = entry.platformType, size = 38.dp)
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = entry.platformLabel,
+                                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                val desc = when (entry.entryType) {
+                                                    EntryType.LOGIN -> entry.username ?: entry.email ?: "Login Details"
+                                                    EntryType.GAME -> entry.gameAccount?.gameName ?: "Game Details"
+                                                    EntryType.NOTE -> "Secure Note"
+                                                    EntryType.CARD -> entry.paymentCard?.cardNumber?.takeLast(4)?.let { "•••• $it" } ?: "Card"
+                                                }
+                                                Text(
+                                                    text = desc,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            Icon(
+                                                imageVector = Icons.Outlined.ChevronRight,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        if (index < recentEntries.lastIndex) {
+                                            HorizontalDivider(
+                                                thickness = 0.5.dp,
+                                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Spacing at the bottom
+                item { Spacer(Modifier.height(80.dp)) }
             }
         }
-        Spacer(Modifier.height(4.dp))
-        HorizontalDivider(
-            thickness = 0.5.dp,
-            color     = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    }
+
+    // ── Command Palette Overlay ──
+    CommandPalette(
+        isOpen = showCommandPalette,
+        onDismiss = { showCommandPalette = false },
+        accounts = accounts,
+        onNavigateToDetail = onNavigateToDetail,
+        onNavigateToAdd = onNavigateToAdd,
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToPremium = onNavigateToPremium,
+        onLock = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            settingsViewModel.logout {
+                onNavigateToSettings()
+            }
+        },
+        onBackup = {
+            settingsViewModel.syncNow()
+        }
+    )
+
+    // ── Subscription Details Dialog ──
+    if (showPremiumDetailsDialog) {
+        AlertDialog(
+            onDismissRequest = { showPremiumDetailsDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPremiumDetailsDialog = false
+                    onNavigateToPremium()
+                }) {
+                    Text("Manage Subscription")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPremiumDetailsDialog = false }) {
+                    Text("Close")
+                }
+            },
+            title = { Text(if (userProfile?.isPremium == true) "Premium Plan" else "Free Plan") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (userProfile?.isPremium == true) {
+                        Text("Active Plan: ${userProfile?.planName ?: "PRO Tier"}")
+                        userProfile?.daysLeft?.let {
+                            Text("Time remaining: $it days")
+                        }
+                        Text("You have unlimited entries, cloud backup sync, and full local vulnerability protection.")
+                    } else {
+                        Text("Plan tier: FREE")
+                        Text("Upgrade to PREMIUM to get unlimited accounts storage (free is capped at ${appConfig?.maxFreeAccounts ?: 5} items), cloud backups sync, and full security score scanning.")
+                    }
+                }
+            }
         )
     }
 }
 
+// ── Welcome header ──
 @Composable
 private fun WelcomeHeader(
-    title:          String,
-    titleColor:     androidx.compose.ui.graphics.Color,
-    subtitle:       String,
-    isPremium:      Boolean,
-    planName:       String?,
-    daysLeft:       Int?,
+    title: String,
+    titleColor: Color,
+    subtitle: String,
+    userProfile: UserProfile?,
     onPremiumClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text     = title,
-            style    = MaterialTheme.typography.bodySmall,
-            color    = titleColor
+            text = title,
+            style = MaterialTheme.typography.bodySmall,
+            color = titleColor
         )
         Row(
-            verticalAlignment     = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text     = subtitle,
-                style    = MaterialTheme.typography.titleLarge,
-                color    = MaterialTheme.colorScheme.onBackground,
+                text = subtitle,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.02).sp),
+                color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            if (title != "Announcement") {
+            if (title != "Announcement" && userProfile != null) {
                 TierBadge(
-                    isPremium  = isPremium,
-                    planName   = planName,
-                    daysLeft   = daysLeft,
-                    modifier   = Modifier.clickableNoRipple { onPremiumClick() } // wait, I need to pass navigate to membership
+                    isPremium = userProfile.isPremium,
+                    planName = userProfile.planName,
+                    daysLeft = userProfile.daysLeft,
+                    modifier = Modifier.clickableNoRipple(onPremiumClick)
                 )
             }
         }
     }
 }
 
-// ── Premium Upgrade Banner ────────────────────────────────────────────────────
+// ── Custom Bento Card Wrapper with Spring Scale Interaction ──
+@Composable
+fun BentoCard(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    content: @Composable BoxScope.() -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "scale"
+    )
+
+    Surface(
+        onClick = onClick,
+        interactionSource = interactionSource,
+        shape = ShapeCard,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
+        modifier = modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        },
+        tonalElevation = 0.dp
+    ) {
+        Box(
+            modifier = Modifier.padding(16.dp),
+            content = content
+        )
+    }
+}
+
+// ── Premium Upgrade Banner ──
 @Composable
 private fun PremiumUpgradeBanner(onClick: () -> Unit) {
     Surface(
-        onClick  = onClick,
-        shape    = ShapeCard,
-        color    = MaterialTheme.colorScheme.primaryContainer,
+        onClick = onClick,
+        shape = ShapeCard,
+        color = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier              = Modifier.padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment     = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                shape = ShapeFull,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                modifier = Modifier.size(48.dp)
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                modifier = Modifier.size(44.dp)
             ) {
                 Icon(
                     Icons.Outlined.WorkspacePremium,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(10.dp)
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text  = "Upgrade to Premium",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "Upgrade to Premium",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text  = "Unlock unlimited accounts, cloud sync, and more exclusive features.",
+                    text = "Unlock unlimited accounts storage, instant sync, and full threats protection.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
@@ -360,16 +686,7 @@ private fun PremiumUpgradeBanner(onClick: () -> Unit) {
     }
 }
 
-// ── Helper: Modifier.clickableNoRipple ────────────────────────────────────────
-fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = composed {
-    clickable(
-        indication           = null,
-        interactionSource    = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-        onClick              = onClick
-    )
-}
-
-// ── User profile data class (for UI layer only) ───────────────────────────────
+// ── User Profile representation for UI layer ──
 data class UserProfile(
     val displayName: String,
     val email: String,
@@ -378,7 +695,7 @@ data class UserProfile(
     val daysLeft: Int?
 )
 
-// ── Extension ─────────────────────────────────────────────────────────────────
+// ── Extension for scroll aware collapsing FAB ──
 @Composable
 fun androidx.compose.foundation.lazy.LazyListState.isScrollingUp(): Boolean {
     var previousIndex by remember(this) { mutableStateOf(firstVisibleItemIndex) }
@@ -397,11 +714,12 @@ fun androidx.compose.foundation.lazy.LazyListState.isScrollingUp(): Boolean {
     }.value
 }
 
-private fun String.maskEmail(): String {
-    val parts = split("@")
-    if (parts.size != 2) return this
-    val user   = parts[0]
-    val domain = parts[1]
-    val masked = user.take(2) + "•".repeat((user.length - 2).coerceAtLeast(1))
-    return "$masked@$domain"
+// ── Modifier helper to disable ripple on clicks ──
+fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = composed {
+    clickable(
+        indication           = null,
+        interactionSource    = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+        onClick              = onClick
+    )
 }
+

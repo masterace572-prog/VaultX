@@ -21,6 +21,8 @@ import com.vaultx.user.presentation.ui.components.*
 import com.vaultx.user.presentation.viewmodel.AccountUiState
 import com.vaultx.user.presentation.viewmodel.AccountViewModel
 
+import androidx.compose.ui.text.font.FontWeight
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EditAccountScreen — pre-populated form mirroring AddAccount
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,30 +59,25 @@ fun EditAccountScreen(
         }
     }
 
-    Scaffold(
+    ModalBottomSheet(
+        onDismissRequest = onCancel,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text("Edit Account", style = MaterialTheme.typography.titleMedium) },
-                navigationIcon = {
-                    IconButton(onClick = onCancel) {
-                        Icon(Icons.Outlined.Close, "Cancel")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        }
-    ) { padding ->
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Text(
+                text = "Edit Account",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
             // ── Platform display (non-editable in edit mode) ──────────────────
             Surface(
                 shape    = ShapeCard,

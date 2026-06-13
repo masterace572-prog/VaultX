@@ -15,7 +15,10 @@ sealed class Screen(val route: String) {
     object Register      : Screen("register")
 
     // ── Main app ──────────────────────────────────────────────────────────────
+    object Main          : Screen("main")
     object Home          : Screen("home")
+    object VaultList     : Screen("vault")
+    object SecurityCenter: Screen("security")
     object AddAccount    : Screen("add_account")
     object AccountDetail : Screen("account_detail/{entryId}") {
         fun createRoute(entryId: String) = "account_detail/$entryId"

@@ -7,6 +7,44 @@ import androidx.compose.ui.graphics.Color
 // Principle: NO gradients. Solid, muted, premium. High contrast.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── AMOLED & Accent Customizations ───────────────────────────────────────────
+val AmoledBackground      = Color(0xFF000000)
+val AmoledSurface         = Color(0xFF0C0C0C)
+val AmoledSurfaceVariant  = Color(0xFF161616)
+val AmoledSurfaceContainer = Color(0xFF0A0A0A)
+
+// Custom Accent Color Options
+// 1. Purple (Default Brand)
+val AccentPurpleDark      = Color(0xFF8B5CF6)
+val AccentPurpleLight     = Color(0xFF7C3AED)
+
+// 2. Blue (Finance / Classic)
+val AccentBlueDark        = Color(0xFF3B82F6)
+val AccentBlueLight       = Color(0xFF1D4ED8)
+
+// 3. Green (Security / Mint)
+val AccentGreenDark       = Color(0xFF10B981)
+val AccentGreenLight      = Color(0xFF047857)
+
+// 4. Red (Crimson / Bold)
+val AccentRedDark         = Color(0xFFEF4444)
+val AccentRedLight        = Color(0xFFB91C1C)
+
+// 5. Orange (Amber / Energetic)
+val AccentOrangeDark      = Color(0xFFF59E0B)
+val AccentOrangeLight     = Color(0xFFC2410C)
+
+// ── High Contrast Color Palette ───────────────────────────────────────────────
+val HighContrastBgDark    = Color(0xFF000000)
+val HighContrastSurfaceDark = Color(0xFF000000)
+val HighContrastTextDark  = Color(0xFFFFFFFF)
+val HighContrastBorderDark = Color(0xFFFFFFFF)
+
+val HighContrastBgLight   = Color(0xFFFFFFFF)
+val HighContrastSurfaceLight = Color(0xFFFFFFFF)
+val HighContrastTextLight  = Color(0xFF000000)
+val HighContrastBorderLight = Color(0xFF000000)
+
 // ── Dark Mode Palette ─────────────────────────────────────────────────────────
 val DarkBackground        = Color(0xFF0A0A0A)  // Deep midnight blue/black
 val DarkSurface           = Color(0xFF171717)  // Elevated deep blue-tinted card

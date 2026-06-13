@@ -37,6 +37,10 @@ class AppViewModel @Inject constructor(
 
     companion object {
         val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")
+        val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+        val ACCENT_COLOR_KEY = stringPreferencesKey("accent_color")
+        val HIGH_CONTRAST_KEY = booleanPreferencesKey("high_contrast")
+        val FONT_SIZE_SCALE_KEY = floatPreferencesKey("font_size_scale")
     }
 
     // ── Loading state ─────────────────────────────────────────────────────────
@@ -47,10 +51,61 @@ class AppViewModel @Inject constructor(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    // ── Dark mode ─────────────────────────────────────────────────────────────
+    // ── Theme settings (flows) ────────────────────────────────────────────────
     val isDarkMode: StateFlow<Boolean?> = dataStore.data
         .map { prefs -> prefs[DARK_MODE_KEY] }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val themeMode: StateFlow<String> = dataStore.data
+        .map { prefs -> prefs[THEME_MODE_KEY] ?: "SYSTEM" }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "SYSTEM")
+
+    val accentColor: StateFlow<String> = dataStore.data
+        .map { prefs -> prefs[ACCENT_COLOR_KEY] ?: "PURPLE" }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "PURPLE")
+
+    val highContrast: StateFlow<Boolean> = dataStore.data
+        .map { prefs -> prefs[HIGH_CONTRAST_KEY] ?: false }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val fontSizeScale: StateFlow<Float> = dataStore.data
+        .map { prefs -> prefs[FONT_SIZE_SCALE_KEY] ?: 1.0f }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 1.0f)
+
+    // ── Theme configuration setters ───────────────────────────────────────────
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch {
+            dataStore.edit { prefs -> prefs[THEME_MODE_KEY] = mode }
+            // Keep the legacy DARK_MODE_KEY in sync for backwards-compatibility parts
+            val legacyDark = when (mode) {
+                "DARK", "AMOLED" -> true
+                "LIGHT" -> false
+                else -> null
+            }
+            dataStore.edit { prefs ->
+                if (legacyDark != null) prefs[DARK_MODE_KEY] = legacyDark
+                else prefs.remove(DARK_MODE_KEY)
+            }
+        }
+    }
+
+    fun setAccentColor(colorName: String) {
+        viewModelScope.launch {
+            dataStore.edit { prefs -> prefs[ACCENT_COLOR_KEY] = colorName }
+        }
+    }
+
+    fun toggleHighContrast(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.edit { prefs -> prefs[HIGH_CONTRAST_KEY] = enabled }
+        }
+    }
+
+    fun setFontSizeScale(scale: Float) {
+        viewModelScope.launch {
+            dataStore.edit { prefs -> prefs[FONT_SIZE_SCALE_KEY] = scale }
+        }
+    }
 
     init {
         resolveInitialAuthState()

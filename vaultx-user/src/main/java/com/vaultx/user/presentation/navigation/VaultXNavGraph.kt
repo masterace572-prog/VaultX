@@ -2,10 +2,13 @@ package com.vaultx.user.presentation.navigation
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.*
 import androidx.navigation.compose.*
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.vaultx.user.presentation.ui.splash.SplashScreen
 import com.vaultx.user.presentation.ui.auth.VaultLockScreen
 import com.vaultx.user.presentation.ui.auth.LoginScreen
@@ -22,6 +25,10 @@ import com.vaultx.user.presentation.ui.settings.HelpSupportScreen
 import com.vaultx.user.presentation.ui.premium.PremiumScreen
 import com.vaultx.user.presentation.ui.premium.PaymentScreen
 import com.vaultx.user.presentation.ui.premium.MembershipScreen
+import com.vaultx.user.presentation.ui.components.VaultXShell
+import com.vaultx.user.presentation.ui.components.VaultTab
+import com.vaultx.user.presentation.ui.vault.VaultListScreen
+import com.vaultx.user.presentation.ui.security.SecurityCenterScreen
 import com.vaultx.user.presentation.viewmodel.AppViewModel
 import com.vaultx.user.presentation.viewmodel.AuthState
 
@@ -38,7 +45,7 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
     val startDestination = when (authState) {
         AuthState.Unauthenticated -> Screen.Login.route
         AuthState.NeedsVaultUnlock -> Screen.VaultLock.route
-        AuthState.Authenticated -> Screen.Home.route
+        AuthState.Authenticated -> Screen.Main.route
         AuthState.Loading -> Screen.VaultLock.route
     }
 
@@ -72,7 +79,7 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
         ) {
             VaultLockScreen(
                 onUnlockSuccess = {
-                    navController.navigate(Screen.Home.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.VaultLock.route) { inclusive = true }
                     }
                 },
@@ -91,7 +98,7 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
         ) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
@@ -104,7 +111,7 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
         composable(route = Screen.Register.route) {
             RegisterScreen(
                 onRegisterSuccess = {
-                    navController.navigate(Screen.Home.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
@@ -112,19 +119,72 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
             )
         }
 
-        // ── Home ──────────────────────────────────────────────────────────────
+        // ── Main Shell with Bottom Bar / Navigation Rail / Navigation Drawer ──
         composable(
-            route = Screen.Home.route,
+            route = Screen.Main.route,
             enterTransition = { fadeIn(tween(350)) },
             exitTransition  = { fadeOut(tween(250)) }
         ) {
-            HomeScreen(
-                onNavigateToAdd     = { navController.navigate(Screen.AddAccount.route) },
-                onNavigateToDetail  = { id -> navController.navigate(Screen.AccountDetail.createRoute(id)) },
-                onNavigateToSearch  = { navController.navigate(Screen.Search.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToPremium = { navController.navigate(Screen.Membership.route) },
-            )
+            val childNavController = rememberNavController()
+            val navBackStackEntry by childNavController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route ?: VaultTab.DASHBOARD.route
+
+            VaultXShell(
+                currentRoute = currentRoute,
+                onTabSelected = { tab ->
+                    childNavController.navigate(tab.route) {
+                        popUpTo(childNavController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            ) { paddingValues ->
+                NavHost(
+                    navController = childNavController,
+                    startDestination = VaultTab.DASHBOARD.route,
+                    modifier = Modifier.padding(paddingValues)
+                ) {
+                    composable(VaultTab.DASHBOARD.route) {
+                        HomeScreen(
+                            onNavigateToAdd      = { navController.navigate(Screen.AddAccount.route) },
+                            onNavigateToDetail   = { id -> navController.navigate(Screen.AccountDetail.createRoute(id)) },
+                            onNavigateToSearch   = { navController.navigate(Screen.Search.route) },
+                            onNavigateToSettings = { childNavController.navigate(VaultTab.SETTINGS.route) },
+                            onNavigateToPremium  = { navController.navigate(Screen.Membership.route) },
+                            onNavigateToVault    = { childNavController.navigate(VaultTab.VAULT.route) },
+                            onNavigateToSecurity = { childNavController.navigate(VaultTab.SECURITY.route) }
+                        )
+                    }
+                    composable(VaultTab.VAULT.route) {
+                        VaultListScreen(
+                            onNavigateToDetail = { id -> navController.navigate(Screen.AccountDetail.createRoute(id)) }
+                        )
+                    }
+                    composable(VaultTab.SECURITY.route) {
+                        SecurityCenterScreen(
+                            onNavigateToDetail = { id -> navController.navigate(Screen.AccountDetail.createRoute(id)) }
+                        )
+                    }
+                    composable(VaultTab.SETTINGS.route) {
+                        SettingsScreen(
+                            onBack     = { /* No-op in bottom navigation root */ },
+                            onLogout   = {
+                                appViewModel.onLogout()
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                            onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                            onNavigateToAppLockSetup = { navController.navigate(Screen.AppLockSetup.route) },
+                            onNavigateToPremium = { navController.navigate(Screen.Membership.route) },
+                            onNavigateToHelpSupport = { navController.navigate(Screen.HelpSupport.route) },
+                            showBackButton = false
+                        )
+                    }
+                }
+            }
         }
 
         // ── Search ────────────────────────────────────────────────────────────
@@ -173,21 +233,6 @@ fun VaultXNavGraph(appViewModel: AppViewModel) {
             )
         }
 
-        // ── Settings ──────────────────────────────────────────────────────────
-        composable(route = Screen.Settings.route) {
-            SettingsScreen(
-                onBack     = { navController.popBackStack() },
-                onLogout   = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onNavigateToAppLockSetup = { navController.navigate(Screen.AppLockSetup.route) },
-                onNavigateToPremium = { navController.navigate(Screen.Membership.route) },
-                onNavigateToHelpSupport = { navController.navigate(Screen.HelpSupport.route) }
-            )
-        }
 
         composable(route = Screen.AppLockSetup.route) {
             AppLockSetupScreen(
