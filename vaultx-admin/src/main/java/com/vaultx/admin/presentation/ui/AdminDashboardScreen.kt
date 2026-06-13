@@ -34,16 +34,7 @@ fun AdminDashboardScreen(
 
     Scaffold(
         modifier = Modifier.systemBarsPadding(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("VaultX Admin", style = MaterialTheme.typography.titleLarge) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (isLoading && users.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -52,9 +43,19 @@ fun AdminDashboardScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                item {
+                    Text(
+                        text = "VaultX Admin",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+
                 item {
                     // Stats Row
                     Row(

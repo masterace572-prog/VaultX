@@ -1,0 +1,14 @@
+{
+  "versionCode": 5,
+  "versionName": "2.0.0",
+  "downloadUrl": "https://github.com/saabarn/VaultX/releases/download/v2.0.0/app-release.apk",
+  "changelog": [
+    "iOS style premium UI overhaul",
+    "Fixed Android 12+ splash screen stuck bug",
+    "Added Instagram and brand icons",
+    "Fixed Screenshot Protection toggle",
+    "Admin JSON update importer",
+    "Remote app configuration toggles"
+  ],
+  "forcedUpdate": false
+}

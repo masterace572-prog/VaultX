@@ -60,6 +60,10 @@ class SettingsViewModel @Inject constructor(
             _biometricLockEnabled.value = prefs.getBoolean("pref_biometric_enabled", false)
             _appLockEnabled.value = prefs.getBoolean("pref_app_lock_enabled", false)
             _screenshotProtectionEnabled.value = prefs.getBoolean("pref_screenshot_protection", true)
+            _userName.value = firebaseAuth.currentUser?.displayName
+                ?: firebaseAuth.currentUser?.email?.substringBefore("@")
+                ?: "User"
+
             runCatching {
                 val uid = firebaseAuth.currentUser?.uid ?: return@runCatching
                 val doc = firestore.collection("users").document(uid).get().await()
@@ -70,10 +74,11 @@ class SettingsViewModel @Inject constructor(
                     if (diff > 0) (diff / 86_400_000L).toInt() else 0
                 } ?: 0
                 _isPremium.value = tier == "premium" && daysLeft > 0
-                _userName.value = doc.getString("name")
-                    ?: firebaseAuth.currentUser?.displayName
-                    ?: firebaseAuth.currentUser?.email?.substringBefore("@")
-                    ?: "User"
+                
+                val name = doc.getString("name")
+                if (!name.isNullOrBlank()) {
+                    _userName.value = name
+                }
             }
             
             _cloudSyncEnabled.value = prefs.getBoolean("pref_cloud_sync_enabled", false)

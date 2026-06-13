@@ -28,27 +28,31 @@ fun PaymentApprovalsScreen(
     val pendingPayments = payments.filter { it.status == "pending" }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Payment Approvals", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Inline Top Bar
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 16.dp, start = 8.dp, end = 24.dp, bottom = 8.dp)
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Payment Approvals",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            Box(modifier = Modifier.fillMaxSize().weight(1f)) {
             if (isLoading && pendingPayments.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -75,6 +79,7 @@ fun PaymentApprovalsScreen(
                         }
                     }
                 }
+            }
             }
         }
     }

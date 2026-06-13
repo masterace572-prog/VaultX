@@ -85,9 +85,11 @@ service cloud.firestore {
     // promo_codes/{promoId}
     // ─────────────────────────────────────────────────────────────────────
     match /promo_codes/{promoId} {
-      allow read: if isAuthenticated();          // Users need to read to validate codes
-      allow update: if isAuthenticated();        // Users need to update currentUses when redeeming
-      allow write: if isAdmin();                 // Admins can create/delete promo codes
+      allow read: if isAuthenticated();          
+      allow update: if isAuthenticated();        
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+      allow write: if isAdmin();                 
     }
 
     // ─────────────────────────────────────────────────────────────────────

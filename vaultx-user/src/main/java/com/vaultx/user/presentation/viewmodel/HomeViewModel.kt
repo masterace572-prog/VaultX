@@ -78,7 +78,14 @@ class HomeViewModel @Inject constructor(
                     upiId              = configDoc.getString("upi_id") ?: "",
                     payeeName          = configDoc.getString("payee_name") ?: "",
                     isMaintenanceMode  = configDoc.getBoolean("is_maintenance_mode") ?: false,
-                    maintenanceMessage = configDoc.getString("maintenance_message") ?: "We are currently under maintenance. Please check back later."
+                    maintenanceMessage = configDoc.getString("maintenance_message") ?: "We are currently under maintenance. Please check back later.",
+                    isAutofillEnabled  = configDoc.getBoolean("is_autofill_enabled") ?: true,
+                    isSignupEnabled    = configDoc.getBoolean("is_signup_enabled") ?: true,
+                    maxFreeAccounts    = configDoc.getLong("max_free_accounts")?.toInt() ?: 5,
+                    isScreenshotAllowed = configDoc.getBoolean("is_screenshot_allowed") ?: false,
+                    supportEmail       = configDoc.getString("support_email") ?: "",
+                    discordLink        = configDoc.getString("discord_link") ?: "",
+                    updateDialogMessage= configDoc.getString("update_dialog_message") ?: "A new update is available. Please update to the latest version."
                 )
             }
             _isLoading.value = false

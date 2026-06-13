@@ -22,10 +22,23 @@ import dagger.hilt.android.AndroidEntryPoint
 // • Hosts the Compose NavGraph
 // ─────────────────────────────────────────────────────────────────────────────
 
-@AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+import androidx.fragment.app.FragmentActivity
 
-    private val prefs by lazy { getSharedPreferences("vaultx_prefs", android.content.Context.MODE_PRIVATE) }
+@AndroidEntryPoint
+class MainActivity : FragmentActivity() {
+
+    private val prefs by lazy {
+        val masterKey = androidx.security.crypto.MasterKey.Builder(this)
+            .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        androidx.security.crypto.EncryptedSharedPreferences.create(
+            this,
+            "vaultx_secure_prefs",
+            masterKey,
+            androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     private val prefListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
         if (key == "pref_screenshot_protection") {
@@ -49,7 +62,14 @@ class MainActivity : ComponentActivity() {
             val isLoading by appViewModel.isLoading.collectAsState()
             val appConfig by homeViewModel.appConfig.collectAsState()
 
-            splashScreen.setKeepOnScreenCondition { isLoading || appConfig == null }
+            var configTimeout by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(3000)
+                configTimeout = true
+            }
+
+            splashScreen.setKeepOnScreenCondition { isLoading || (appConfig == null && !configTimeout) }
 
             VaultXTheme(userDarkModeOverride = isDarkMode) {
                 if (appConfig?.isMaintenanceMode == true) {

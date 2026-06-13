@@ -76,22 +76,6 @@ fun AppUpdateManagerScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("App Update Manager", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    VaultIconButton(
-                        icon = Icons.Outlined.ArrowBack,
-                        onClick = onBack,
-                        contentDescription = "Back"
-                    )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -106,7 +90,10 @@ fun AppUpdateManagerScreen(
                         upiId = appConfig?.upiId ?: "",
                         payeeName = appConfig?.payeeName ?: "",
                         isMaintenanceMode = appConfig?.isMaintenanceMode ?: false,
-                        maintenanceMessage = appConfig?.maintenanceMessage ?: ""
+                        maintenanceMessage = appConfig?.maintenanceMessage ?: "",
+                        isAutofillEnabled = appConfig?.isAutofillEnabled ?: true,
+                        isSignupEnabled = appConfig?.isSignupEnabled ?: true,
+                        maxFreeAccounts = appConfig?.maxFreeAccounts ?: 5
                     )
                     viewModel.updateAppConfig(config)
                     onBack()
@@ -123,9 +110,27 @@ fun AppUpdateManagerScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Inline Top Bar
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                VaultIconButton(
+                    icon = Icons.Outlined.ArrowBack,
+                    onClick = onBack,
+                    contentDescription = "Back"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "App Update Manager",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
             // ── Import JSON Button ────────────────────────────────────────────
             VaultButton(
                 text = "Import from JSON",

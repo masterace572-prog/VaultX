@@ -207,6 +207,13 @@ fun SettingsScreen(
                     valueText = "$accountCount accounts",
                     valueColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                VaultDivider()
+                SettingsActionRow(
+                    icon     = Icons.Outlined.Download,
+                    title    = "Export Vault Data",
+                    subtitle = "Export your local accounts to an encrypted file",
+                    onClick  = { /* Handle export */ }
+                )
             }
 
             // ── Premium ───────────────────────────────────────────────────────
@@ -238,8 +245,8 @@ fun SettingsScreen(
                 }
             }
 
-            // ── About ─────────────────────────────────────────────────────────
-            SettingsSectionLabel("ABOUT")
+            // ── About & Support ────────────────────────────────────────────────
+            SettingsSectionLabel("ABOUT & SUPPORT")
             SettingsCard {
                 SettingsInfoRow(
                     icon      = Icons.Outlined.Info,
@@ -255,6 +262,20 @@ fun SettingsScreen(
                     subtitle  = "Zero-Knowledge AES-256-GCM",
                     valueText = "Active",
                     valueColor = MaterialTheme.colorScheme.secondary
+                )
+                VaultDivider()
+                SettingsActionRow(
+                    icon     = Icons.Outlined.SystemUpdate,
+                    title    = "Check for Updates",
+                    subtitle = "Verify if a new version is available",
+                    onClick  = { /* Manually trigger update check */ }
+                )
+                VaultDivider()
+                SettingsActionRow(
+                    icon     = Icons.Outlined.HelpOutline,
+                    title    = "Help & Support",
+                    subtitle = "Contact us or read FAQs",
+                    onClick  = { /* Open support link */ }
                 )
             }
 

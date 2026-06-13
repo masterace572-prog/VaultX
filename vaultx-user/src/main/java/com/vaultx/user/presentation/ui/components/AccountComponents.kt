@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import com.vaultx.user.data.model.PlatformType
 import com.vaultx.user.presentation.theme.*
 
+import com.vaultx.user.R
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Platform icon + color mapping
 // ─────────────────────────────────────────────────────────────────────────────
@@ -34,26 +36,46 @@ fun platformVisual(type: PlatformType): PlatformVisual = when (type) {
     PlatformType.CUSTOM    -> PlatformVisual(Icons.Outlined.Key,            PlatformCustom)
 }
 
+fun platformIconRes(type: PlatformType): Int? = when (type) {
+    PlatformType.INSTAGRAM -> R.drawable.ic_platform_instagram
+    PlatformType.TWITTER   -> R.drawable.ic_platform_twitter
+    PlatformType.FACEBOOK  -> R.drawable.ic_platform_facebook
+    PlatformType.GOOGLE    -> R.drawable.ic_platform_google
+    PlatformType.DISCORD   -> R.drawable.ic_platform_discord
+    else -> null
+}
+
 // ── Platform icon avatar ──────────────────────────────────────────────────────
 @Composable
 fun PlatformIcon(
     type: PlatformType,
-    size: Dp = 48.dp,
+    size: Dp = 52.dp,
     modifier: Modifier = Modifier
 ) {
     val visual = platformVisual(type)
+    val customRes = platformIconRes(type)
+
     Surface(
         modifier = modifier.size(size),
-        shape    = ShapeChip,
+        shape    = androidx.compose.foundation.shape.RoundedCornerShape(14.dp), // Premium Apple-like squircle
         color    = visual.color.copy(alpha = 0.15f)
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector        = visual.icon,
-                contentDescription = type.displayName,
-                tint               = visual.color,
-                modifier           = Modifier.size(size * 0.5f)
-            )
+            if (customRes != null) {
+                Icon(
+                    painter = androidx.compose.ui.res.painterResource(id = customRes),
+                    contentDescription = type.displayName,
+                    tint = Color.Unspecified, // Keep the real vector colors
+                    modifier = Modifier.size(size * 0.55f)
+                )
+            } else {
+                Icon(
+                    imageVector        = visual.icon,
+                    contentDescription = type.displayName,
+                    tint               = visual.color,
+                    modifier           = Modifier.size(size * 0.5f)
+                )
+            }
         }
     }
 }

@@ -111,7 +111,14 @@ data class AppConfig(
     val upiId: String                  = "",
     val payeeName: String              = "",
     val isMaintenanceMode: Boolean     = false,
-    val maintenanceMessage: String     = "We are currently under maintenance. Please check back later."
+    val maintenanceMessage: String     = "We are currently under maintenance. Please check back later.",
+    val isAutofillEnabled: Boolean     = true,
+    val isSignupEnabled: Boolean       = true,
+    val maxFreeAccounts: Int           = 5,
+    val isScreenshotAllowed: Boolean   = false,
+    val supportEmail: String           = "",
+    val discordLink: String            = "",
+    val updateDialogMessage: String    = "A new update is available. Please update to the latest version."
 )
 
 // ── Plan model ────────────────────────────────────────────────────────────────

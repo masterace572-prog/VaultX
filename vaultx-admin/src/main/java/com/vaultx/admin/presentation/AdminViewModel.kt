@@ -122,7 +122,14 @@ class AdminViewModel @Inject constructor(
                         upiId = configDoc.getString("upi_id") ?: "",
                         payeeName = configDoc.getString("payee_name") ?: "",
                         isMaintenanceMode = configDoc.getBoolean("is_maintenance_mode") ?: false,
-                        maintenanceMessage = configDoc.getString("maintenance_message") ?: "We are currently under maintenance. Please check back later."
+                        maintenanceMessage = configDoc.getString("maintenance_message") ?: "We are currently under maintenance. Please check back later.",
+                        isAutofillEnabled = configDoc.getBoolean("is_autofill_enabled") ?: true,
+                        isSignupEnabled = configDoc.getBoolean("is_signup_enabled") ?: true,
+                        maxFreeAccounts = configDoc.getLong("max_free_accounts")?.toInt() ?: 5,
+                        isScreenshotAllowed = configDoc.getBoolean("is_screenshot_allowed") ?: false,
+                        supportEmail = configDoc.getString("support_email") ?: "",
+                        discordLink = configDoc.getString("discord_link") ?: "",
+                        updateDialogMessage = configDoc.getString("update_dialog_message") ?: "A new update is available. Please update to the latest version."
                     )
                 }
 
@@ -222,6 +229,13 @@ class AdminViewModel @Inject constructor(
                     "payee_name" to config.payeeName,
                     "is_maintenance_mode" to config.isMaintenanceMode,
                     "maintenance_message" to config.maintenanceMessage,
+                    "is_autofill_enabled" to config.isAutofillEnabled,
+                    "is_signup_enabled" to config.isSignupEnabled,
+                    "max_free_accounts" to config.maxFreeAccounts,
+                    "is_screenshot_allowed" to config.isScreenshotAllowed,
+                    "support_email" to config.supportEmail,
+                    "discord_link" to config.discordLink,
+                    "update_dialog_message" to config.updateDialogMessage,
                     "updated_at" to com.google.firebase.Timestamp.now()
                 )).await()
                 loadData()

@@ -53,10 +53,29 @@ class VaultXAutofillService : AutofillService() {
             serviceScope.launch {
                 try {
                     val accounts = accountRepository.getAllAccountsSync()
+                    val platformPackages = mapOf(
+                        com.vaultx.user.data.model.PlatformType.INSTAGRAM to listOf("com.instagram.android"),
+                        com.vaultx.user.data.model.PlatformType.TWITTER to listOf("com.twitter.android", "com.x.twitter"),
+                        com.vaultx.user.data.model.PlatformType.FACEBOOK to listOf("com.facebook.katana", "com.facebook.lite", "com.facebook.orca"),
+                        com.vaultx.user.data.model.PlatformType.GOOGLE to listOf("com.google.android.gms", "com.android.chrome", "com.google.android.youtube"),
+                        com.vaultx.user.data.model.PlatformType.DISCORD to listOf("com.discord")
+                    )
+
+                    val platformDomains = mapOf(
+                        com.vaultx.user.data.model.PlatformType.INSTAGRAM to listOf("instagram.com"),
+                        com.vaultx.user.data.model.PlatformType.TWITTER to listOf("twitter.com", "x.com"),
+                        com.vaultx.user.data.model.PlatformType.FACEBOOK to listOf("facebook.com"),
+                        com.vaultx.user.data.model.PlatformType.GOOGLE to listOf("google.com"),
+                        com.vaultx.user.data.model.PlatformType.DISCORD to listOf("discord.com")
+                    )
+
                     val matchedAccounts = accounts.filter { account ->
-                        account.appPackageName.equals(requestPackageName, ignoreCase = true) ||
-                        (parser.webDomain != null && account.websiteUrl.isNotBlank() &&
-                            account.websiteUrl.contains(parser.webDomain!!, ignoreCase = true))
+                        // Explicit package/url match
+                        (account.appPackageName.isNotBlank() && account.appPackageName.equals(requestPackageName, ignoreCase = true)) ||
+                        (parser.webDomain != null && account.websiteUrl.isNotBlank() && account.websiteUrl.contains(parser.webDomain!!, ignoreCase = true)) ||
+                        // Platform fallback match (Zero-config magic)
+                        platformPackages[account.platformType]?.contains(requestPackageName) == true ||
+                        (parser.webDomain != null && platformDomains[account.platformType]?.any { parser.webDomain!!.contains(it, ignoreCase = true) } == true)
                     }
 
                     if (matchedAccounts.isEmpty()) {

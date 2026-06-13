@@ -186,12 +186,21 @@ private fun HomeTopBar(
                 label    = "header_content"
             ) { isAnnouncement ->
                 if (isAnnouncement && appConfig != null) {
-                    AnnouncementBanner(text = appConfig.announcementText)
+                    WelcomeHeader(
+                        title = "Announcement",
+                        titleColor = MaterialTheme.colorScheme.primary,
+                        subtitle = appConfig.announcementText,
+                        isPremium = userProfile?.isPremium ?: false,
+                        daysLeft = userProfile?.daysLeft,
+                        onPremiumClick = onPremiumClick
+                    )
                 } else {
                     WelcomeHeader(
-                        displayName = userProfile?.displayName ?: "there",
-                        isPremium   = userProfile?.isPremium ?: false,
-                        daysLeft    = userProfile?.daysLeft,
+                        title = "Welcome back,",
+                        titleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        subtitle = userProfile?.displayName ?: "there",
+                        isPremium = userProfile?.isPremium ?: false,
+                        daysLeft = userProfile?.daysLeft,
                         onPremiumClick = onPremiumClick
                     )
                 }
@@ -225,23 +234,25 @@ private fun HomeTopBar(
 
 @Composable
 private fun WelcomeHeader(
-    displayName:    String,
+    title:          String,
+    titleColor:     androidx.compose.ui.graphics.Color,
+    subtitle:       String,
     isPremium:      Boolean,
     daysLeft:       Int?,
     onPremiumClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text     = "Welcome back,",
+            text     = title,
             style    = MaterialTheme.typography.bodySmall,
-            color    = MaterialTheme.colorScheme.onSurfaceVariant
+            color    = titleColor
         )
         Row(
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text     = displayName,
+                text     = subtitle,
                 style    = MaterialTheme.typography.titleLarge,
                 color    = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
@@ -253,24 +264,6 @@ private fun WelcomeHeader(
                 modifier   = if (!isPremium) Modifier.clickableNoRipple(onPremiumClick) else Modifier
             )
         }
-    }
-}
-
-@Composable
-private fun AnnouncementBanner(text: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text     = "Announcement",
-            style    = MaterialTheme.typography.bodySmall,
-            color    = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text     = text,
-            style    = MaterialTheme.typography.titleLarge,
-            color    = MaterialTheme.colorScheme.onBackground,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 

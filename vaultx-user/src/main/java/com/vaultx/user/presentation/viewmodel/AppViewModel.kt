@@ -58,35 +58,38 @@ class AppViewModel @Inject constructor(
 
     private fun resolveInitialAuthState() {
         viewModelScope.launch {
-            val firebaseUser = firebaseAuth.currentUser
-            if (firebaseUser == null) {
-                _authState.value = AuthState.Unauthenticated
-            } else if (vaultSession.isUnlocked) {
-                _authState.value = AuthState.Authenticated
-            } else {
-                val isAppLockEnabled = encryptedPrefs.getBoolean("pref_app_lock_enabled", false)
-                if (isAppLockEnabled) {
-                    _authState.value = AuthState.NeedsVaultUnlock
+            try {
+                val firebaseUser = firebaseAuth.currentUser
+                if (firebaseUser == null) {
+                    _authState.value = AuthState.Unauthenticated
+                } else if (vaultSession.isUnlocked) {
+                    _authState.value = AuthState.Authenticated
                 } else {
-                    try {
-                        val keystoreKey = cryptoManager.getOrCreateKeystoreKey()
-                        val ciphertext = encryptedPrefs.getString("wrapped_db_key", null)
-                        val iv = encryptedPrefs.getString("wrapped_db_iv", null)
-                        if (ciphertext != null && iv != null) {
-                            val encryptedData = com.vaultx.user.security.EncryptedData(ciphertext, iv)
-                            val dbKey = cryptoManager.unwrapKey(encryptedData, keystoreKey)
-                            vaultSession.openVault(cryptoManager.keyToBytes(dbKey))
-                            _authState.value = AuthState.Authenticated
-                        } else {
+                    val isAppLockEnabled = encryptedPrefs.getBoolean("pref_app_lock_enabled", false)
+                    if (isAppLockEnabled) {
+                        _authState.value = AuthState.NeedsVaultUnlock
+                    } else {
+                        try {
+                            val keystoreKey = cryptoManager.getOrCreateKeystoreKey()
+                            val ciphertext = encryptedPrefs.getString("wrapped_db_key", null)
+                            val iv = encryptedPrefs.getString("wrapped_db_iv", null)
+                            if (ciphertext != null && iv != null) {
+                                val encryptedData = com.vaultx.user.security.EncryptedData(ciphertext, iv)
+                                val dbKey = cryptoManager.unwrapKey(encryptedData, keystoreKey)
+                                vaultSession.openVault(cryptoManager.keyToBytes(dbKey))
+                                _authState.value = AuthState.Authenticated
+                            } else {
+                                _authState.value = AuthState.NeedsVaultUnlock
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                             _authState.value = AuthState.NeedsVaultUnlock
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        _authState.value = AuthState.NeedsVaultUnlock
                     }
                 }
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 

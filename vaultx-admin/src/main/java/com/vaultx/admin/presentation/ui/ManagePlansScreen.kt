@@ -30,18 +30,6 @@ fun ManagePlansScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Manage Plans", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    VaultIconButton(icon = Icons.Outlined.ArrowBack, onClick = onBack, contentDescription = "Back")
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { editingPlan = null; showDialog = true },
@@ -52,12 +40,28 @@ fun ManagePlansScreen(
             }
         }
     ) { padding ->
-        if (plans.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Inline Top Bar
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 16.dp, start = 8.dp, end = 24.dp, bottom = 8.dp)
             ) {
+                VaultIconButton(icon = Icons.Outlined.ArrowBack, onClick = onBack, contentDescription = "Back")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Manage Plans",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            if (plans.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
                 Text("No plans configured.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 VaultButton(
@@ -80,6 +84,7 @@ fun ManagePlansScreen(
                         onDelete = { viewModel.deletePlan(plan.id) }
                     )
                 }
+            }
             }
         }
     }

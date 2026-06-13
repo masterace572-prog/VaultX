@@ -35,20 +35,6 @@ fun PromoCodesScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Promo Codes", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -62,10 +48,28 @@ fun PromoCodesScreen(
             }
         }
     ) { padding ->
-        if (promoCodes.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No promo codes found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Inline Top Bar
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 16.dp, start = 8.dp, end = 24.dp, bottom = 8.dp)
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Promo Codes",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
+
+            if (promoCodes.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No promo codes found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -101,7 +105,8 @@ fun PromoCodesScreen(
                 }
             )
         }
-    }
+    } // End of Column
+    } // End of Scaffold padding block
 }
 
 @Composable

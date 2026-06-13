@@ -17,10 +17,10 @@ val VaultXShapes = Shapes(
 )
 
 // Convenience aliases used in components
-val ShapeCard     = RoundedCornerShape(16.dp)
-val ShapeInput    = RoundedCornerShape(12.dp)
-val ShapeButton   = RoundedCornerShape(12.dp)
-val ShapeChip     = RoundedCornerShape(8.dp)
-val ShapeBottomSheet = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-val ShapeBadge    = RoundedCornerShape(6.dp)
+val ShapeCard     = RoundedCornerShape(20.dp) // Apple-style large card radius
+val ShapeInput    = RoundedCornerShape(16.dp)
+val ShapeButton   = RoundedCornerShape(16.dp)
+val ShapeChip     = RoundedCornerShape(12.dp)
+val ShapeBottomSheet = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+val ShapeBadge    = RoundedCornerShape(8.dp)
 val ShapeFull     = RoundedCornerShape(50)  // Pill / FAB
