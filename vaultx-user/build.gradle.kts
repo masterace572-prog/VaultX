@@ -16,8 +16,8 @@ android {
         applicationId = "com.vaultx.user"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "2.6.0"
+        versionCode = 14
+        versionName = "2.7.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("int", "APP_VERSION_CODE", versionCode.toString())
         buildConfigField("String", "APP_VERSION_NAME", "\"$versionName\"")

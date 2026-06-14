@@ -1,9 +1,9 @@
 {
-  "versionCode": 13,
-  "versionName": "2.6.0",
-  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.6.0/VaultX-User-v2.6.0.apk",
+  "versionCode": 14,
+  "versionName": "2.7.0",
+  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.7.0/VaultX-User-v2.7.0.apk",
   "changelog": [
-    "The Full UI Customization Engine Update. Glassmorphism, Bouncy animations, dynamic shape geometry, and more!"
+    "Liquid Glass UI Upgrade. Complete migration from Glassmorphism to robust iOS-style Liquid Glass effects, fixing clipping and shadow bugs. Refined customization menu layout."
   ],
   "forcedUpdate": false
 }
