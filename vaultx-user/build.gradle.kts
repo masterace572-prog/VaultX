@@ -17,7 +17,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 13
-        versionName = "2.5.0"
+        versionName = "2.6.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("int", "APP_VERSION_CODE", versionCode.toString())
         buildConfigField("String", "APP_VERSION_NAME", "\"$versionName\"")
@@ -109,6 +109,8 @@ dependencies {
     // UI helpers
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.coil.compose)
+    implementation(libs.compose.icons.tabler)
+    implementation(libs.androidx.ui.text.google.fonts)
 
     // DataStore for theme persistence
     implementation("androidx.datastore:datastore-preferences:1.1.1")
