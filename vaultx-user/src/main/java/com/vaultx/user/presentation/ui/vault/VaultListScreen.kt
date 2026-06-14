@@ -3,8 +3,11 @@ package com.vaultx.user.presentation.ui.vault
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +24,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.vaultx.user.presentation.theme.liquidGlass
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -191,14 +196,35 @@ fun VaultListScreen(
                 }
             }
         } else {
+            val engine = LocalVaultUIEngine.current
+            val densityPadding = when (engine.uiDensity) {
+                UIDensity.COMPACT -> 8.dp
+                UIDensity.COMFORTABLE -> 16.dp
+                UIDensity.SPACIOUS -> 24.dp
+            }
+            
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = densityPadding, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(filteredEntries, key = { it.id }) { entry ->
+                    val index = filteredEntries.indexOf(entry)
+                    val animatedOffset = remember { androidx.compose.animation.core.Animatable(50f) }
+                    val animatedAlpha = remember { androidx.compose.animation.core.Animatable(0f) }
+                    
+                    LaunchedEffect(entry.id) {
+                        kotlinx.coroutines.delay((index * 40L).coerceAtMost(300L))
+                        launch { 
+                            animatedOffset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) 
+                        }
+                        launch { 
+                            animatedAlpha.animateTo(1f, tween(250)) 
+                        }
+                    }
+
                     val dismissState = rememberSwipeToDismissBoxState(
                         confirmValueChange = { false } // Spring bounce back
                     )
@@ -228,7 +254,12 @@ fun VaultListScreen(
                                 )
                             }
                         },
-                        modifier = Modifier.animateItemPlacement()
+                        modifier = Modifier
+                            .animateItemPlacement()
+                            .graphicsLayer {
+                                translationY = animatedOffset.value
+                                alpha = animatedAlpha.value
+                            }
                     ) {
                         VaultEntryCard(
                             entry = entry,
@@ -247,6 +278,7 @@ fun VaultEntryCard(
     entry: AccountEntry,
     onClick: () -> Unit
 ) {
+    val engine = LocalVaultUIEngine.current
     val visual = platformVisual(entry.platformType)
     val hue = (kotlin.math.abs(entry.platformLabel.hashCode().toLong()) % 360).toFloat()
     val glowColor = Color.hsv(hue, 0.6f, 0.5f)
@@ -267,19 +299,17 @@ fun VaultEntryCard(
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .blur(20.dp)
-                .background(glowColor.copy(alpha = 0.08f), ShapeCard)
-        )
-        Surface(
+        if (engine.blurEffectsEnabled) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .blur(20.dp)
+                    .background(glowColor.copy(alpha = 0.08f), MaterialTheme.shapes.medium)
+            )
+        }
+        VaultCard(
             onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-            shape = ShapeCard,
-            color = MaterialTheme.colorScheme.surface,
-            border = androidx.compose.foundation.BorderStroke(1.dp, visual.color.copy(alpha = 0.15f)),
-            tonalElevation = 0.dp
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),

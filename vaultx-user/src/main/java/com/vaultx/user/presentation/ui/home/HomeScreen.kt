@@ -138,11 +138,18 @@ fun HomeScreen(
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
+                val engine = LocalVaultUIEngine.current
+                val densityPadding = when (engine.uiDensity) {
+                    UIDensity.COMPACT -> 8.dp
+                    UIDensity.COMFORTABLE -> 16.dp
+                    UIDensity.SPACIOUS -> 24.dp
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
                         .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = densityPadding, vertical = densityPadding)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -186,8 +193,6 @@ fun HomeScreen(
                             }
                         }
                     }
-                    Spacer(Modifier.height(4.dp))
-                    HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
                 }
             },
             floatingActionButton = {
@@ -203,12 +208,19 @@ fun HomeScreen(
                 )
             }
         ) { padding ->
+            val engine = LocalVaultUIEngine.current
+            val densityPadding = when (engine.uiDensity) {
+                UIDensity.COMPACT -> 8.dp
+                UIDensity.COMFORTABLE -> 16.dp
+                UIDensity.SPACIOUS -> 24.dp
+            }
+            
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = densityPadding, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // ── Premium Banner ──
@@ -218,13 +230,51 @@ fun HomeScreen(
                     }
                 }
 
-                // ── Bento Grid Section ──
+                // ── Dashboard Grid/List Section ──
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
+                    if (engine.dashboardLayout == DashboardLayoutOption.LIST) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            // Password Vault
+                            BentoCard(onClick = onNavigateToVault, modifier = Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Icon(Icons.Outlined.Lock, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Password Vault", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                        Text("$loginCount accounts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            }
+                            // Security Score
+                            BentoCard(onClick = onNavigateToSecurity, modifier = Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Icon(Icons.Outlined.Security, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Security Score", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                        Text("Score: $securityScore", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            }
+                            // Games
+                            BentoCard(onClick = onNavigateToVault, modifier = Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Icon(Icons.Outlined.SportsEsports, null, tint = PlatformGame, modifier = Modifier.size(28.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Games", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                                        Text("$gameCount accounts", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Grid Layout (Default / Compact Grid)
+                        val isCompactGrid = engine.dashboardLayout == DashboardLayoutOption.COMPACT_GRID
+                        val gridSpacing = if (isCompactGrid) 8.dp else 12.dp
+                        
+                        Column(verticalArrangement = Arrangement.spacedBy(gridSpacing)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(gridSpacing)
+                            ) {
                             // Password Vault Card (Large - 2/3)
                             BentoCard(
                                 modifier = Modifier.weight(2f),
@@ -375,6 +425,7 @@ fun HomeScreen(
                                         )
                                     }
                                 }
+                            }
                             }
                         }
                     }
@@ -541,32 +592,16 @@ private fun WelcomeHeader(
     }
 }
 
-// ── Custom Bento Card Wrapper with Spring Scale Interaction ──
+// ── Custom Bento Card Wrapper using VaultCard ──
 @Composable
 fun BentoCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     content: @Composable BoxScope.() -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.96f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "scale"
-    )
-
-    Surface(
-        onClick = onClick,
-        interactionSource = interactionSource,
-        shape = ShapeCard,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)),
-        modifier = modifier.graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        },
-        tonalElevation = 0.dp
+    VaultCard(
+        modifier = modifier,
+        onClick = onClick
     ) {
         Box(
             modifier = Modifier.padding(16.dp),

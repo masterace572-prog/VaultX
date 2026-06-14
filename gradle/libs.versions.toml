@@ -27,6 +27,9 @@ androidxJunit = "1.2.1"
 espresso = "3.6.1"
 googleServices = "4.4.2"
 serializationJson = "1.7.1"
+composeIcons = "1.1.1"
+googleFonts = "1.6.7"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -92,6 +95,8 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+compose-icons-tabler = { group = "br.com.devsrsouza.compose.icons", name = "tabler-icons", version.ref = "composeIcons" }
+androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "googleFonts" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -6,25 +6,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.vaultx.user.di.VaultSessionManager
+import com.vaultx.user.presentation.theme.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AuthState — determines which navigation start destination to use
-// ─────────────────────────────────────────────────────────────────────────────
-
 enum class AuthState {
     Loading,
     Unauthenticated,
-    NeedsVaultUnlock,  // Firebase logged in but vault not opened (biometric needed)
-    Authenticated      // Firebase logged in AND vault open
+    NeedsVaultUnlock,
+    Authenticated
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AppViewModel — top-level shared state (theme, auth state)
-// ─────────────────────────────────────────────────────────────────────────────
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
@@ -36,74 +29,73 @@ class AppViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")
         val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
-        val ACCENT_COLOR_KEY = stringPreferencesKey("accent_color")
-        val HIGH_CONTRAST_KEY = booleanPreferencesKey("high_contrast")
-        val FONT_SIZE_SCALE_KEY = floatPreferencesKey("font_size_scale")
+        val APP_COLOR_KEY = stringPreferencesKey("app_color")
+        val CORNER_RADIUS_KEY = stringPreferencesKey("corner_radius")
+        val UI_DENSITY_KEY = stringPreferencesKey("ui_density")
+        val FONT_SIZE_KEY = stringPreferencesKey("font_size")
+        val FONT_FAMILY_KEY = stringPreferencesKey("font_family")
+        val CARD_STYLE_KEY = stringPreferencesKey("card_style")
+        val NAV_STYLE_KEY = stringPreferencesKey("nav_style")
+        val ANIMATIONS_KEY = booleanPreferencesKey("animations_enabled")
+        val BLUR_EFFECTS_KEY = booleanPreferencesKey("blur_effects")
+        val AMOLED_MODE_KEY = booleanPreferencesKey("amoled_mode")
+        val ICON_SHAPE_KEY = stringPreferencesKey("icon_shape")
+        val DASHBOARD_LAYOUT_KEY = stringPreferencesKey("dashboard_layout")
     }
 
-    // ── Loading state ─────────────────────────────────────────────────────────
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    // ── Auth state ────────────────────────────────────────────────────────────
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    // ── Theme settings (flows) ────────────────────────────────────────────────
-    val isDarkMode: StateFlow<Boolean?> = dataStore.data
-        .map { prefs -> prefs[DARK_MODE_KEY] }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val uiEngine: StateFlow<VaultUIEngine> = dataStore.data.map { prefs ->
+        VaultUIEngine(
+            themeMode = safeValueOf(prefs[THEME_MODE_KEY], ThemeMode.SYSTEM),
+            appColor = safeValueOf(prefs[APP_COLOR_KEY], AppColor.DYNAMIC),
+            cornerRadius = safeValueOf(prefs[CORNER_RADIUS_KEY], CornerRadiusOption.MEDIUM),
+            uiDensity = safeValueOf(prefs[UI_DENSITY_KEY], UIDensity.COMFORTABLE),
+            fontSize = safeValueOf(prefs[FONT_SIZE_KEY], FontSizeOption.MEDIUM),
+            fontFamily = safeValueOf(prefs[FONT_FAMILY_KEY], FontFamilyOption.SYSTEM),
+            cardStyle = safeValueOf(prefs[CARD_STYLE_KEY], CardStyle.FILLED),
+            navStyle = safeValueOf(prefs[NAV_STYLE_KEY], NavStyle.BOTTOM_NAV),
+            animationsEnabled = prefs[ANIMATIONS_KEY] ?: true,
+            blurEffectsEnabled = prefs[BLUR_EFFECTS_KEY] ?: false,
+            amoledMode = prefs[AMOLED_MODE_KEY] ?: false,
+            iconShape = safeValueOf(prefs[ICON_SHAPE_KEY], IconShapeOption.ROUNDED),
+            dashboardLayout = safeValueOf(prefs[DASHBOARD_LAYOUT_KEY], DashboardLayoutOption.LIST)
+        )
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, VaultUIEngine())
 
-    val themeMode: StateFlow<String> = dataStore.data
-        .map { prefs -> prefs[THEME_MODE_KEY] ?: "SYSTEM" }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, "SYSTEM")
+    private inline fun <reified T : Enum<T>> safeValueOf(value: String?, default: T): T {
+        if (value == null) return default
+        return try {
+            enumValueOf<T>(value)
+        } catch (e: Exception) {
+            default
+        }
+    }
 
-    val accentColor: StateFlow<String> = dataStore.data
-        .map { prefs -> prefs[ACCENT_COLOR_KEY] ?: "PURPLE" }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, "PURPLE")
-
-    val highContrast: StateFlow<Boolean> = dataStore.data
-        .map { prefs -> prefs[HIGH_CONTRAST_KEY] ?: false }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
-    val fontSizeScale: StateFlow<Float> = dataStore.data
-        .map { prefs -> prefs[FONT_SIZE_SCALE_KEY] ?: 1.0f }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, 1.0f)
-
-    // ── Theme configuration setters ───────────────────────────────────────────
-    fun setThemeMode(mode: String) {
+    fun updateEngine(updater: (VaultUIEngine) -> VaultUIEngine) {
+        val current = uiEngine.value
+        val next = updater(current)
         viewModelScope.launch {
-            dataStore.edit { prefs -> prefs[THEME_MODE_KEY] = mode }
-            // Keep the legacy DARK_MODE_KEY in sync for backwards-compatibility parts
-            val legacyDark = when (mode) {
-                "DARK", "AMOLED" -> true
-                "LIGHT" -> false
-                else -> null
-            }
             dataStore.edit { prefs ->
-                if (legacyDark != null) prefs[DARK_MODE_KEY] = legacyDark
-                else prefs.remove(DARK_MODE_KEY)
+                prefs[THEME_MODE_KEY] = next.themeMode.name
+                prefs[APP_COLOR_KEY] = next.appColor.name
+                prefs[CORNER_RADIUS_KEY] = next.cornerRadius.name
+                prefs[UI_DENSITY_KEY] = next.uiDensity.name
+                prefs[FONT_SIZE_KEY] = next.fontSize.name
+                prefs[FONT_FAMILY_KEY] = next.fontFamily.name
+                prefs[CARD_STYLE_KEY] = next.cardStyle.name
+                prefs[NAV_STYLE_KEY] = next.navStyle.name
+                prefs[ANIMATIONS_KEY] = next.animationsEnabled
+                prefs[BLUR_EFFECTS_KEY] = next.blurEffectsEnabled
+                prefs[AMOLED_MODE_KEY] = next.amoledMode
+                prefs[ICON_SHAPE_KEY] = next.iconShape.name
+                prefs[DASHBOARD_LAYOUT_KEY] = next.dashboardLayout.name
             }
-        }
-    }
-
-    fun setAccentColor(colorName: String) {
-        viewModelScope.launch {
-            dataStore.edit { prefs -> prefs[ACCENT_COLOR_KEY] = colorName }
-        }
-    }
-
-    fun toggleHighContrast(enabled: Boolean) {
-        viewModelScope.launch {
-            dataStore.edit { prefs -> prefs[HIGH_CONTRAST_KEY] = enabled }
-        }
-    }
-
-    fun setFontSizeScale(scale: Float) {
-        viewModelScope.launch {
-            dataStore.edit { prefs -> prefs[FONT_SIZE_SCALE_KEY] = scale }
         }
     }
 
@@ -111,55 +103,29 @@ class AppViewModel @Inject constructor(
         resolveInitialAuthState()
     }
 
+    fun checkAuth() {
+        resolveInitialAuthState()
+    }
+
     private fun resolveInitialAuthState() {
         viewModelScope.launch {
-            try {
-                val firebaseUser = firebaseAuth.currentUser
-                if (firebaseUser == null) {
-                    _authState.value = AuthState.Unauthenticated
-                } else if (vaultSession.isUnlocked) {
+            _isLoading.value = true
+            val user = firebaseAuth.currentUser
+            if (user == null) {
+                _authState.value = AuthState.Unauthenticated
+            } else {
+                val hasPin = encryptedPrefs.contains("pref_app_pin_salt")
+                val hasBiometrics = encryptedPrefs.getBoolean("pref_biometric_enabled", false)
+                
+                if (!hasPin && !hasBiometrics) {
+                    _authState.value = AuthState.Authenticated
+                } else if (vaultSession.isUnlocked()) {
                     _authState.value = AuthState.Authenticated
                 } else {
-                    val isAppLockEnabled = encryptedPrefs.getBoolean("pref_app_lock_enabled", false)
-                    val isBiometricEnabled = encryptedPrefs.getBoolean("pref_biometric_enabled", false)
-                    if (isAppLockEnabled || isBiometricEnabled) {
-                        _authState.value = AuthState.NeedsVaultUnlock
-                    } else {
-                        try {
-                            val keystoreKey = cryptoManager.getOrCreateKeystoreKey()
-                            val ciphertext = encryptedPrefs.getString("wrapped_db_key", null)
-                            val iv = encryptedPrefs.getString("wrapped_db_iv", null)
-                            if (ciphertext != null && iv != null) {
-                                val encryptedData = com.vaultx.user.security.EncryptedData(ciphertext, iv)
-                                val dbKey = cryptoManager.unwrapKey(encryptedData, keystoreKey)
-                                vaultSession.openVault(cryptoManager.keyToBytes(dbKey))
-                                _authState.value = AuthState.Authenticated
-                            } else {
-                                _authState.value = AuthState.NeedsVaultUnlock
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            _authState.value = AuthState.NeedsVaultUnlock
-                        }
-                    }
+                    _authState.value = AuthState.NeedsVaultUnlock
                 }
-            } finally {
-                _isLoading.value = false
             }
-        }
-    }
-
-    fun onVaultUnlocked() {
-        _authState.value = AuthState.Authenticated
-    }
-
-    fun onLogout() {
-        _authState.value = AuthState.Unauthenticated
-    }
-
-    fun toggleDarkMode(enabled: Boolean) {
-        viewModelScope.launch {
-            dataStore.edit { prefs -> prefs[DARK_MODE_KEY] = enabled }
+            _isLoading.value = false
         }
     }
 }

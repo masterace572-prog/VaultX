@@ -1,70 +1,156 @@
 package com.vaultx.user.presentation.theme
 
 import android.app.Activity
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 
-// ─────────────────────────────────────────────────────────────────────────────
-// VaultX Theme
-// ─────────────────────────────────────────────────────────────────────────────
+// --- Enums for Advanced MD3 Customization ---
+enum class ThemeMode { LIGHT, DARK, SYSTEM, AMOLED }
+enum class AppColor { BLUE, INDIGO, PURPLE, GREEN, ORANGE, RED, TEAL, GRAY, DYNAMIC }
+enum class CornerRadiusOption { SMALL, MEDIUM, LARGE, EXTRA_LARGE }
+enum class UIDensity { COMPACT, COMFORTABLE, SPACIOUS }
+enum class FontSizeOption { SMALL, MEDIUM, LARGE, EXTRA_LARGE }
+enum class FontFamilyOption { SYSTEM, SERIF, MONOSPACE }
+enum class CardStyle { FILLED, ELEVATED, OUTLINED }
+enum class NavStyle { BOTTOM_NAV, NAV_RAIL }
+enum class IconShapeOption { ROUNDED, SQUIRCLE, CIRCLE }
+enum class DashboardLayoutOption { LIST, GRID, COMPACT_GRID }
 
-private val DarkColorScheme = darkColorScheme(
-    primary              = DarkPrimary,
-    onPrimary            = DarkOnPrimary,
-    primaryContainer     = DarkPrimaryVariant,
-    onPrimaryContainer   = DarkOnPrimary,
-    secondary            = DarkSecondary,
-    onSecondary          = DarkOnSecondary,
-    secondaryContainer   = Color(0xFF1E3A2F),
-    onSecondaryContainer = DarkSecondary,
-    tertiary             = DarkBadgePremium,
-    onTertiary           = Color(0xFF12100A),
-    background           = DarkBackground,
-    onBackground         = DarkOnBackground,
-    surface              = DarkSurface,
-    onSurface            = DarkOnSurface,
-    surfaceVariant       = DarkSurfaceVariant,
-    onSurfaceVariant     = DarkOnSurfaceVariant,
-    surfaceContainer     = DarkSurfaceContainer,
-    outline              = DarkOutline,
-    outlineVariant       = DarkOutlineFocused,
-    error                = DarkError,
-    onError              = DarkOnError,
+// --- VaultUIEngine ---
+data class VaultUIEngine(
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val appColor: AppColor = AppColor.DYNAMIC,
+    val cornerRadius: CornerRadiusOption = CornerRadiusOption.MEDIUM,
+    val uiDensity: UIDensity = UIDensity.COMFORTABLE,
+    val fontSize: FontSizeOption = FontSizeOption.MEDIUM,
+    val fontFamily: FontFamilyOption = FontFamilyOption.SYSTEM,
+    val cardStyle: CardStyle = CardStyle.FILLED,
+    val navStyle: NavStyle = NavStyle.BOTTOM_NAV,
+    val animationsEnabled: Boolean = true,
+    val blurEffectsEnabled: Boolean = false,
+    val amoledMode: Boolean = false,
+    val iconShape: IconShapeOption = IconShapeOption.ROUNDED,
+    val dashboardLayout: DashboardLayoutOption = DashboardLayoutOption.LIST
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary              = LightPrimary,
-    onPrimary            = LightOnPrimary,
-    primaryContainer     = Color(0xFFDEDEFF),
-    onPrimaryContainer   = LightPrimary,
-    secondary            = LightSecondary,
-    onSecondary          = LightOnSecondary,
-    secondaryContainer   = Color(0xFFD0F0E0),
-    onSecondaryContainer = LightSecondary,
-    tertiary             = LightBadgePremium,
-    onTertiary           = Color(0xFFFFFFFF),
-    background           = LightBackground,
-    onBackground         = LightOnBackground,
-    surface              = LightSurface,
-    onSurface            = LightOnSurface,
-    surfaceVariant       = LightSurfaceVariant,
-    onSurfaceVariant     = LightOnSurfaceVariant,
-    surfaceContainer     = LightSurfaceContainer,
-    outline              = LightOutline,
-    outlineVariant       = LightOutlineFocused,
-    error                = LightError,
-    onError              = LightOnError,
-)
+val LocalVaultUIEngine = compositionLocalOf { VaultUIEngine() }
 
-// ── CompositionLocal for theme override ───────────────────────────────────────
-// This allows any screen to call VaultXTheme.darkMode to read the current mode
+// --- Color Palettes ---
+private fun getColorScheme(darkTheme: Boolean, amoled: Boolean, appColor: AppColor): ColorScheme {
+    // A simplified map of core seed colors for the presets
+    val seedColor = when (appColor) {
+        AppColor.BLUE -> Color(0xFF1976D2)
+        AppColor.INDIGO -> Color(0xFF3F51B5)
+        AppColor.PURPLE -> Color(0xFF6750A4)
+        AppColor.GREEN -> Color(0xFF386A20)
+        AppColor.ORANGE -> Color(0xFFE65100)
+        AppColor.RED -> Color(0xFFB3261E)
+        AppColor.TEAL -> Color(0xFF006B5E)
+        AppColor.GRAY -> Color(0xFF606060)
+        AppColor.DYNAMIC -> Color(0xFF6750A4) // Fallback
+    }
+    
+    // MD3 tonal palettes based on the seed
+    val primary = if (darkTheme) seedColor.copy(alpha = 0.8f) else seedColor
+    val onPrimary = if (darkTheme) Color.Black else Color.White
+    val background = if (amoled && darkTheme) Color.Black else if (darkTheme) Color(0xFF121212) else Color(0xFFFBFDF8)
+    val surface = if (amoled && darkTheme) Color.Black else if (darkTheme) Color(0xFF1E1E1E) else Color(0xFFFFFFFF)
+    val surfaceVariant = if (darkTheme) Color(0xFF49454F) else Color(0xFFE7E0EC)
+    val onSurfaceVariant = if (darkTheme) Color(0xFFCAC4D0) else Color(0xFF49454F)
+    
+    return if (darkTheme) {
+        darkColorScheme(
+            primary = primary,
+            onPrimary = onPrimary,
+            primaryContainer = seedColor.copy(alpha = 0.3f),
+            onPrimaryContainer = seedColor.copy(alpha = 0.9f),
+            background = background,
+            surface = surface,
+            surfaceVariant = surfaceVariant,
+            onSurfaceVariant = onSurfaceVariant
+        )
+    } else {
+        lightColorScheme(
+            primary = primary,
+            onPrimary = onPrimary,
+            primaryContainer = seedColor.copy(alpha = 0.2f),
+            onPrimaryContainer = seedColor,
+            background = background,
+            surface = surface,
+            surfaceVariant = surfaceVariant,
+            onSurfaceVariant = onSurfaceVariant
+        )
+    }
+}
+
+// --- Typography ---
+private fun getTypography(fontSize: FontSizeOption, fontFamilyOption: FontFamilyOption): Typography {
+    val scale = when (fontSize) {
+        FontSizeOption.SMALL -> 0.85f
+        FontSizeOption.MEDIUM -> 1.0f
+        FontSizeOption.LARGE -> 1.15f
+        FontSizeOption.EXTRA_LARGE -> 1.3f
+    }
+    
+    val family = when (fontFamilyOption) {
+        FontFamilyOption.SERIF -> FontFamily.Serif
+        FontFamilyOption.MONOSPACE -> FontFamily.Monospace
+        else -> FontFamily.Default
+    }
+    
+    val default = Typography()
+    fun androidx.compose.ui.text.TextStyle.scale() = this.copy(
+        fontSize = this.fontSize * scale,
+        lineHeight = this.lineHeight * scale,
+        fontFamily = family
+    )
+    
+    return Typography(
+        displayLarge = default.displayLarge.scale(),
+        displayMedium = default.displayMedium.scale(),
+        displaySmall = default.displaySmall.scale(),
+        headlineLarge = default.headlineLarge.scale(),
+        headlineMedium = default.headlineMedium.scale(),
+        headlineSmall = default.headlineSmall.scale(),
+        titleLarge = default.titleLarge.scale(),
+        titleMedium = default.titleMedium.scale(),
+        titleSmall = default.titleSmall.scale(),
+        bodyLarge = default.bodyLarge.scale(),
+        bodyMedium = default.bodyMedium.scale(),
+        bodySmall = default.bodySmall.scale(),
+        labelLarge = default.labelLarge.scale(),
+        labelMedium = default.labelMedium.scale(),
+        labelSmall = default.labelSmall.scale()
+    )
+}
+
+// --- Shapes ---
+private fun getShapes(cornerRadius: CornerRadiusOption): Shapes {
+    val radius = when (cornerRadius) {
+        CornerRadiusOption.SMALL -> 8.dp
+        CornerRadiusOption.MEDIUM -> 16.dp
+        CornerRadiusOption.LARGE -> 24.dp
+        CornerRadiusOption.EXTRA_LARGE -> 32.dp
+    }
+    return Shapes(
+        small = RoundedCornerShape(radius / 2),
+        medium = RoundedCornerShape(radius),
+        large = RoundedCornerShape(radius * 1.5f)
+    )
+}
+
+// --- Theme Composable ---
 object VaultXTheme {
     val colorScheme: ColorScheme
         @Composable get() = MaterialTheme.colorScheme
@@ -74,219 +160,51 @@ object VaultXTheme {
         @Composable get() = MaterialTheme.shapes
 }
 
-// Composition local to allow runtime dark mode toggle
 val LocalDarkMode = compositionLocalOf { false }
-
-// High Contrast dark scheme
-private val HighContrastDarkScheme = darkColorScheme(
-    primary              = Color.White,
-    onPrimary            = Color.Black,
-    primaryContainer     = Color.White,
-    onPrimaryContainer   = Color.Black,
-    secondary            = Color.White,
-    onSecondary          = Color.Black,
-    secondaryContainer   = Color(0xFF1C1C1C),
-    onSecondaryContainer = Color.White,
-    background           = HighContrastBgDark,
-    onBackground         = HighContrastTextDark,
-    surface              = HighContrastSurfaceDark,
-    onSurface            = HighContrastTextDark,
-    surfaceVariant       = Color(0xFF121212),
-    onSurfaceVariant     = HighContrastTextDark,
-    outline              = HighContrastBorderDark,
-    outlineVariant       = HighContrastBorderDark,
-    error                = Color.Red,
-    onError              = Color.White,
-)
-
-// High Contrast light scheme
-private val HighContrastLightScheme = lightColorScheme(
-    primary              = Color.Black,
-    onPrimary            = Color.White,
-    primaryContainer     = Color.Black,
-    onPrimaryContainer   = Color.White,
-    secondary            = Color.Black,
-    onSecondary          = Color.White,
-    secondaryContainer   = Color(0xFFE5E5E5),
-    onSecondaryContainer = Color.Black,
-    background           = HighContrastBgLight,
-    onBackground         = HighContrastTextLight,
-    surface              = HighContrastSurfaceLight,
-    onSurface            = HighContrastTextLight,
-    surfaceVariant       = Color(0xFFF0F0F0),
-    onSurfaceVariant     = HighContrastTextLight,
-    outline              = HighContrastBorderLight,
-    outlineVariant       = HighContrastBorderLight,
-    error                = Color.Red,
-    onError              = Color.White,
-)
-
-// Helper extension to scale typography
-private fun Typography.scale(factor: Float): Typography {
-    if (factor == 1.0f) return this
-    return Typography(
-        displayLarge = displayLarge.copy(fontSize = displayLarge.fontSize * factor, lineHeight = displayLarge.lineHeight * factor),
-        displayMedium = displayMedium.copy(fontSize = displayMedium.fontSize * factor, lineHeight = displayMedium.lineHeight * factor),
-        displaySmall = displaySmall.copy(fontSize = displaySmall.fontSize * factor, lineHeight = displaySmall.lineHeight * factor),
-        headlineLarge = headlineLarge.copy(fontSize = headlineLarge.fontSize * factor, lineHeight = headlineLarge.lineHeight * factor),
-        headlineMedium = headlineMedium.copy(fontSize = headlineMedium.fontSize * factor, lineHeight = headlineMedium.lineHeight * factor),
-        headlineSmall = headlineSmall.copy(fontSize = headlineSmall.fontSize * factor, lineHeight = headlineSmall.lineHeight * factor),
-        titleLarge = titleLarge.copy(fontSize = titleLarge.fontSize * factor, lineHeight = titleLarge.lineHeight * factor),
-        titleMedium = titleMedium.copy(fontSize = titleMedium.fontSize * factor, lineHeight = titleMedium.lineHeight * factor),
-        titleSmall = titleSmall.copy(fontSize = titleSmall.fontSize * factor, lineHeight = titleSmall.lineHeight * factor),
-        bodyLarge = bodyLarge.copy(fontSize = bodyLarge.fontSize * factor, lineHeight = bodyLarge.lineHeight * factor),
-        bodyMedium = bodyMedium.copy(fontSize = bodyMedium.fontSize * factor, lineHeight = bodyMedium.lineHeight * factor),
-        bodySmall = bodySmall.copy(fontSize = bodySmall.fontSize * factor, lineHeight = bodySmall.lineHeight * factor),
-        labelLarge = labelLarge.copy(fontSize = labelLarge.fontSize * factor, lineHeight = labelLarge.lineHeight * factor),
-        labelMedium = labelMedium.copy(fontSize = labelMedium.fontSize * factor, lineHeight = labelMedium.lineHeight * factor),
-        labelSmall = labelSmall.copy(fontSize = labelSmall.fontSize * factor, lineHeight = labelSmall.lineHeight * factor)
-    )
-}
 
 @Composable
 fun VaultXTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Legacy support
-    userDarkModeOverride: Boolean? = null,
-    // 3-way mode override: "LIGHT" | "DARK" | "AMOLED" | "SYSTEM"
-    themeMode: String = "SYSTEM",
-    isDynamicColor: Boolean = false,
-    // Accent override: "PURPLE" | "BLUE" | "GREEN" | "RED" | "ORANGE"
-    accentColor: String = "PURPLE",
-    // High contrast override
-    highContrast: Boolean = false,
-    fontSizeScale: Float = 1.0f,
+    engine: VaultUIEngine,
     content: @Composable () -> Unit
 ) {
-    val effectiveDarkMode = when (themeMode) {
-        "DARK", "AMOLED" -> true
-        "LIGHT" -> false
-        else -> userDarkModeOverride ?: darkTheme
+    val systemDark = isSystemInDarkTheme()
+    val isDark = when (engine.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK, ThemeMode.AMOLED -> true
+        ThemeMode.SYSTEM -> systemDark
     }
-    val context = androidx.compose.ui.platform.LocalContext.current
-
-    // Accent mappings
-    val selectedPrimaryLight = when (accentColor) {
-        "BLUE" -> AccentBlueLight
-        "GREEN" -> AccentGreenLight
-        "RED" -> AccentRedLight
-        "ORANGE" -> AccentOrangeLight
-        else -> AccentPurpleLight
-    }
-    val selectedPrimaryDark = when (accentColor) {
-        "BLUE" -> AccentBlueDark
-        "GREEN" -> AccentGreenDark
-        "RED" -> AccentRedDark
-        "ORANGE" -> AccentOrangeDark
-        else -> AccentPurpleDark
+    val isAmoled = engine.themeMode == ThemeMode.AMOLED || (engine.themeMode == ThemeMode.SYSTEM && systemDark && engine.amoledMode)
+    
+    val context = LocalContext.current
+    val colorScheme = if (engine.appColor == AppColor.DYNAMIC && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        getColorScheme(isDark, isAmoled, engine.appColor)
     }
 
-    // Dynamic target values for crossfade animations
-    val targetPrimary = when {
-        highContrast && effectiveDarkMode -> Color.White
-        highContrast && !effectiveDarkMode -> Color.Black
-        effectiveDarkMode -> selectedPrimaryDark
-        else -> selectedPrimaryLight
-    }
-    val targetBackground = when {
-        highContrast && effectiveDarkMode -> HighContrastBgDark
-        highContrast && !effectiveDarkMode -> HighContrastBgLight
-        themeMode == "AMOLED" -> AmoledBackground
-        effectiveDarkMode -> DarkBackground
-        else -> LightBackground
-    }
-    val targetSurface = when {
-        highContrast && effectiveDarkMode -> HighContrastSurfaceDark
-        highContrast && !effectiveDarkMode -> HighContrastSurfaceLight
-        themeMode == "AMOLED" -> AmoledSurface
-        effectiveDarkMode -> DarkSurface
-        else -> LightSurface
-    }
+    val typography = getTypography(engine.fontSize, engine.fontFamily)
+    val shapes = getShapes(engine.cornerRadius)
 
-    // Smooth color crossfade animation
-    val animatedPrimary by animateColorAsState(
-        targetValue = targetPrimary,
-        animationSpec = tween(durationMillis = 350),
-        label = "primary_color"
-    )
-    val animatedBackground by animateColorAsState(
-        targetValue = targetBackground,
-        animationSpec = tween(durationMillis = 350),
-        label = "background_color"
-    )
-    val animatedSurface by animateColorAsState(
-        targetValue = targetSurface,
-        animationSpec = tween(durationMillis = 350),
-        label = "surface_color"
-    )
-
-    // Build custom AMOLED scheme
-    val AmoledColorScheme = darkColorScheme(
-        primary              = selectedPrimaryDark,
-        onPrimary            = DarkOnPrimary,
-        primaryContainer     = DarkPrimaryVariant,
-        onPrimaryContainer   = DarkOnPrimary,
-        secondary            = DarkSecondary,
-        onSecondary          = DarkOnSecondary,
-        secondaryContainer   = Color(0xFF122C24),
-        onSecondaryContainer = DarkSecondary,
-        tertiary             = DarkBadgePremium,
-        onTertiary           = Color(0xFF12100A),
-        background           = AmoledBackground,
-        onBackground         = DarkOnBackground,
-        surface              = AmoledSurface,
-        onSurface            = DarkOnSurface,
-        surfaceVariant       = AmoledSurfaceVariant,
-        onSurfaceVariant     = DarkOnSurfaceVariant,
-        surfaceContainer     = AmoledSurfaceContainer,
-        outline              = DarkOutline,
-        outlineVariant       = DarkOutlineFocused,
-        error                = DarkError,
-        onError              = DarkOnError,
-    )
-
-    // Resolve active base scheme
-    val baseScheme = when {
-        highContrast && effectiveDarkMode -> HighContrastDarkScheme
-        highContrast && !effectiveDarkMode -> HighContrastLightScheme
-        isDynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S -> {
-            if (effectiveDarkMode) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        themeMode == "AMOLED" -> AmoledColorScheme
-        effectiveDarkMode -> DarkColorScheme.copy(primary = selectedPrimaryDark)
-        else -> LightColorScheme.copy(primary = selectedPrimaryLight)
-    }
-
-    // Blend animated components
-    val colorScheme = baseScheme.copy(
-        primary = animatedPrimary,
-        background = animatedBackground,
-        surface = animatedSurface
-    )
-
-    // Edge-to-edge status bars
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = !effectiveDarkMode
-                isAppearanceLightNavigationBars = !effectiveDarkMode
-            }
+            window.statusBarColor = Color.Transparent.toArgb()
+            window.navigationBarColor = Color.Transparent.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !isDark
         }
     }
 
-    val scaledTypography = remember(fontSizeScale) {
-        VaultXTypography.scale(fontSizeScale)
-    }
-
-    CompositionLocalProvider(LocalDarkMode provides effectiveDarkMode) {
+    CompositionLocalProvider(
+        LocalVaultUIEngine provides engine,
+        LocalDarkMode provides isDark
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography  = scaledTypography,
-            shapes      = VaultXShapes,
-            content     = content
+            typography = typography,
+            shapes = shapes,
+            content = content
         )
     }
 }

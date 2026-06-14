@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import com.vaultx.user.presentation.theme.*
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,7 +20,7 @@ import com.vaultx.user.presentation.theme.*
 // All have a built-in loading state with circular indicator
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum class VaultButtonVariant { Primary, Secondary, Ghost }
+enum class VaultButtonVariant { Primary, Secondary, Tonal, Ghost }
 
 @Composable
 fun VaultButton(
@@ -31,9 +34,22 @@ fun VaultButton(
     enabled: Boolean = true,
     fullWidth: Boolean = true,
 ) {
-    val buttonModifier = modifier.then(
-        if (fullWidth) Modifier.fillMaxWidth() else Modifier
-    ).height(44.dp)
+    val engine = LocalVaultUIEngine.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    
+    val targetScale = if (isPressed && engine.animationsEnabled) 0.95f else 1f
+    val scale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = if (!engine.animationsEnabled) snap() 
+                        else spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "button_scale"
+    )
+
+    val buttonModifier = modifier
+        .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier)
+        .height(48.dp) // MD3 standard is often 40-48dp, 48 for larger touch targets
+        .scale(scale)
 
     when (variant) {
         VaultButtonVariant.Primary -> {
@@ -41,17 +57,27 @@ fun VaultButton(
                 onClick = { if (!isLoading) onClick() },
                 modifier = buttonModifier,
                 enabled = enabled && !isLoading,
-                shape = ShapeButton,
+                interactionSource = interactionSource,
+                shape = MaterialTheme.shapes.small,
                 colors = ButtonDefaults.buttonColors(
                     containerColor         = MaterialTheme.colorScheme.primary,
                     contentColor           = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                    disabledContentColor   = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 0.dp,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    disabledContentColor   = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                 )
+            ) {
+                ButtonContent(text, leadingIcon, trailingIcon, isLoading)
+            }
+        }
+        
+        VaultButtonVariant.Tonal -> {
+            FilledTonalButton(
+                onClick = { if (!isLoading) onClick() },
+                modifier = buttonModifier,
+                enabled = enabled && !isLoading,
+                interactionSource = interactionSource,
+                shape = MaterialTheme.shapes.small,
+                colors = ButtonDefaults.filledTonalButtonColors()
             ) {
                 ButtonContent(text, leadingIcon, trailingIcon, isLoading)
             }
@@ -62,13 +88,12 @@ fun VaultButton(
                 onClick = { if (!isLoading) onClick() },
                 modifier = buttonModifier,
                 enabled = enabled && !isLoading,
-                shape = ShapeButton,
-                border = ButtonDefaults.outlinedButtonBorder.copy(
-                    width = 1.5.dp
-                ),
+                interactionSource = interactionSource,
+                shape = MaterialTheme.shapes.small,
+                border = ButtonDefaults.outlinedButtonBorder,
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor           = MaterialTheme.colorScheme.primary,
-                    disabledContentColor   = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                    disabledContentColor   = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                 )
             ) {
                 ButtonContent(text, leadingIcon, trailingIcon, isLoading)
@@ -80,10 +105,11 @@ fun VaultButton(
                 onClick = { if (!isLoading) onClick() },
                 modifier = buttonModifier,
                 enabled = enabled && !isLoading,
-                shape = ShapeButton,
+                interactionSource = interactionSource,
+                shape = MaterialTheme.shapes.small,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor         = MaterialTheme.colorScheme.primary,
-                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                 )
             ) {
                 ButtonContent(text, leadingIcon, trailingIcon, isLoading)
@@ -151,9 +177,22 @@ fun VaultIconButton(
     contentDescription: String = "",
     tint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val engine = LocalVaultUIEngine.current
+    
+    val targetScale = if (isPressed) 0.85f else 1f
+    val scale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = if (engine.animationSpeed == "Instant") snap() 
+                        else spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "icon_button_scale"
+    )
+
     IconButton(
         onClick = onClick,
-        modifier = modifier.size(40.dp)
+        interactionSource = interactionSource,
+        modifier = modifier.size(40.dp).scale(scale)
     ) {
         Icon(
             imageVector = icon,

@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.keyframes
 import com.vaultx.user.presentation.theme.*
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,8 +43,8 @@ fun VaultTextField(
     enabled: Boolean = true,
     readOnly: Boolean = false,
 ) {
+    val engine = LocalVaultUIEngine.current
     var isFocused by remember { mutableStateOf(false) }
-    val isDark = LocalDarkMode.current
 
     // Animate border color on focus
     val borderColor by animateColorAsState(
@@ -51,7 +53,7 @@ fun VaultTextField(
             isFocused -> MaterialTheme.colorScheme.primary
             else     -> MaterialTheme.colorScheme.outline
         },
-        animationSpec = tween(durationMillis = 250),
+        animationSpec = if (engine.animationsEnabled) tween(durationMillis = 250) else snap(),
         label = "border_color"
     )
 
@@ -62,11 +64,31 @@ fun VaultTextField(
             isFocused -> MaterialTheme.colorScheme.primary
             else      -> MaterialTheme.colorScheme.onSurfaceVariant
         },
-        animationSpec = tween(durationMillis = 250),
+        animationSpec = if (engine.animationsEnabled) tween(durationMillis = 250) else snap(),
         label = "label_color"
     )
 
-    Column(modifier = modifier) {
+    // Error shake animation
+    val offsetX = remember { Animatable(0f) }
+    LaunchedEffect(isError) {
+        if (isError && engine.animationsEnabled) {
+            offsetX.animateTo(
+                targetValue = 0f,
+                animationSpec = keyframes {
+                    durationMillis = 400
+                    10f at 50
+                    -10f at 150
+                    10f at 250
+                    -10f at 350
+                    0f at 400
+                }
+            )
+        } else {
+            offsetX.snapTo(0f)
+        }
+    }
+
+    Column(modifier = modifier.offset(x = offsetX.value.dp)) {
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
@@ -106,7 +128,7 @@ fun VaultTextField(
             maxLines = maxLines,
             enabled = enabled,
             readOnly = readOnly,
-            shape = ShapeInput,
+            shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(
                 // Container
                 focusedContainerColor   = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),

@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vaultx.user.presentation.theme.LocalVaultUIEngine
+import com.vaultx.user.presentation.theme.NavStyle
 
 enum class VaultTab(val route: String, val title: String, val icon: ImageVector) {
     DASHBOARD("dashboard", "Dashboard", Icons.Outlined.Dashboard),
@@ -33,6 +35,7 @@ fun VaultXShell(
     val screenWidthDp = configuration.screenWidthDp
     val isTablet = screenWidthDp in 600..839
     val isDesktop = screenWidthDp >= 840
+    val engine = LocalVaultUIEngine.current
 
     val activeTab = remember(currentRoute) {
         VaultTab.values().firstOrNull { currentRoute.startsWith(it.route) } ?: VaultTab.DASHBOARD
@@ -78,9 +81,9 @@ fun VaultXShell(
                                 icon = { Icon(tab.icon, contentDescription = tab.title) },
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
                                 colors = NavigationDrawerItemDefaults.colors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                     unselectedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
                                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -95,21 +98,13 @@ fun VaultXShell(
                 }
             }
         }
-    } else if (isTablet) {
-        // Tablet Layout: Navigation Rail
+    } else if (isTablet || engine.navStyle == NavStyle.NAV_RAIL) {
+        // Navigation Rail Layout
         Row(modifier = Modifier.fillMaxSize()) {
             NavigationRail(
                 containerColor = MaterialTheme.colorScheme.surface,
-                header = {
-                    Text(
-                        text = "VX",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-                }
             ) {
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(32.dp))
                 VaultTab.values().forEach { tab ->
                     NavigationRailItem(
                         selected = activeTab == tab,
@@ -117,11 +112,11 @@ fun VaultXShell(
                         icon = { Icon(tab.icon, contentDescription = tab.title) },
                         label = { Text(tab.title, style = MaterialTheme.typography.labelSmall) },
                         colors = NavigationRailItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
                             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
                 }
@@ -132,12 +127,12 @@ fun VaultXShell(
             }
         }
     } else {
-        // Phone Layout: Bottom Navigation
+        // Phone Layout: Bottom Navigation (Standard MD3)
         Scaffold(
             bottomBar = {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 0.dp
+                    tonalElevation = 3.dp // Standard MD3 elevation for Nav bars
                 ) {
                     VaultTab.values().forEach { tab ->
                         NavigationBarItem(
@@ -146,19 +141,19 @@ fun VaultXShell(
                             icon = { Icon(tab.icon, contentDescription = tab.title) },
                             label = { Text(tab.title, style = MaterialTheme.typography.labelSmall) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
                                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
                             )
                         )
                     }
                 }
             }
         ) { padding ->
-            Box(modifier = Modifier.fillMaxSize()) {
-                content(padding)
+            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                content(PaddingValues(0.dp))
             }
         }
     }

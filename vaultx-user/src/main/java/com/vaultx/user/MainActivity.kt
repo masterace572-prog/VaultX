@@ -80,12 +80,8 @@ class MainActivity : FragmentActivity() {
             val appViewModel: AppViewModel = hiltViewModel()
             val homeViewModel: com.vaultx.user.presentation.viewmodel.HomeViewModel = hiltViewModel()
             val settingsViewModel: com.vaultx.user.presentation.viewmodel.SettingsViewModel = hiltViewModel()
-            val isDarkMode by appViewModel.isDarkMode.collectAsState()
-            val themeMode by appViewModel.themeMode.collectAsState()
-            val accentColor by appViewModel.accentColor.collectAsState()
-            val highContrast by appViewModel.highContrast.collectAsState()
-            val fontSizeScale by appViewModel.fontSizeScale.collectAsState()
-            val useDynamicColor by settingsViewModel.useDynamicTheming.collectAsState()
+            
+            val uiEngine by appViewModel.uiEngine.collectAsState()
             val isLoading by appViewModel.isLoading.collectAsState()
             val appConfig by homeViewModel.appConfig.collectAsState()
 
@@ -99,12 +95,7 @@ class MainActivity : FragmentActivity() {
             splashScreen.setKeepOnScreenCondition { isLoading || (appConfig == null && !configTimeout) }
 
             VaultXTheme(
-                userDarkModeOverride = isDarkMode,
-                themeMode = themeMode,
-                isDynamicColor = useDynamicColor,
-                accentColor = accentColor,
-                highContrast = highContrast,
-                fontSizeScale = fontSizeScale
+                engine = uiEngine
             ) {
                 if (appConfig?.isMaintenanceMode == true) {
                     com.vaultx.user.presentation.ui.maintenance.MaintenanceScreen(

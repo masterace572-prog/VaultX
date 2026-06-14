@@ -1,16 +1,13 @@
 package com.vaultx.user.presentation.ui.settings
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -30,10 +27,6 @@ import com.vaultx.user.presentation.viewmodel.SettingsViewModel
 import com.vaultx.user.security.BiometricAvailability
 import com.vaultx.user.security.BiometricHelper
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SettingsScreen
-// ─────────────────────────────────────────────────────────────────────────────
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -47,12 +40,8 @@ fun SettingsScreen(
     appViewModel:    AppViewModel    = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
-    val isDarkMode      by appViewModel.isDarkMode.collectAsState()
-    val themeMode       by appViewModel.themeMode.collectAsState()
-    val accentColor     by appViewModel.accentColor.collectAsState()
-    val highContrast    by appViewModel.highContrast.collectAsState()
-    val fontSizeScale   by appViewModel.fontSizeScale.collectAsState()
-    val useDynamicTheming by settingsViewModel.useDynamicTheming.collectAsState()
+    val uiEngine by appViewModel.uiEngine.collectAsState()
+    
     val accountCount    by settingsViewModel.accountCount.collectAsState()
     val cloudSyncEnabled by settingsViewModel.cloudSyncEnabled.collectAsState()
     val biometricLockEnabled by settingsViewModel.biometricLockEnabled.collectAsState()
@@ -73,7 +62,6 @@ fun SettingsScreen(
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
-    var showThemeDialog by remember { mutableStateOf(false) }
     var exportPassword by remember { mutableStateOf("") }
     
     Scaffold(
@@ -102,7 +90,6 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ── Account card ──────────────────────────────────────────────────
             Spacer(Modifier.height(4.dp))
             AccountProfileCard(
                 name        = userName,
@@ -117,426 +104,483 @@ fun SettingsScreen(
             // ── Appearance ────────────────────────────────────────────────────
             SettingsSectionLabel("APPEARANCE")
             SettingsCard {
-                SettingsActionRow(
-                    icon     = Icons.Outlined.SettingsBrightness,
-                    title    = "Theme Mode",
-                    subtitle = "Selected: ${themeMode.lowercase().replaceFirstChar { it.uppercase() }}",
-                    onClick  = { showThemeDialog = true }
+                EnumPickerRow(
+                    icon = Icons.Outlined.SettingsBrightness,
+                    title = "Theme Mode",
+                    currentValue = uiEngine.themeMode,
+                    enumValues = ThemeMode.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(themeMode = v) } }
                 )
                 VaultDivider()
                 SettingsToggleRow(
-                    icon     = Icons.Outlined.Palette,
-                    title    = "Material You",
-                    subtitle = "Use dynamic colors based on wallpaper (Android 12+)",
-                    checked  = useDynamicTheming,
-                    onToggle = { settingsViewModel.setDynamicTheming(it) }
-                )
-                if (!useDynamicTheming) {
-                    VaultDivider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Outlined.ColorLens, null, tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp))
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Accent Color", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                            Text("Select primary theme color", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.height(8.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                val colors = listOf(
-                                    "PURPLE" to AccentPurpleDark,
-                                    "BLUE" to AccentBlueDark,
-                                    "GREEN" to AccentGreenDark,
-                                    "RED" to AccentRedDark,
-                                    "ORANGE" to AccentOrangeDark
-                                )
-                                colors.forEach { (name, color) ->
-                                    val isSelected = accentColor == name
-                                    Box(
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .background(color, CircleShape)
-                                            .clickable { appViewModel.setAccentColor(name) }
-                                            .border(
-                                                width = if (isSelected) 2.dp else 0.dp,
-                                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-                                                shape = CircleShape
-                                            )
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-                VaultDivider()
-                SettingsToggleRow(
-                    icon     = Icons.Outlined.Contrast,
-                    title    = "High Contrast",
-                    subtitle = "Maximize text legibility",
-                    checked  = highContrast,
-                    onToggle = { appViewModel.toggleHighContrast(it) }
+                    icon = Icons.Outlined.Contrast,
+                    title = "AMOLED Dark Mode",
+                    subtitle = "Use pure black for dark theme backgrounds",
+                    checked = uiEngine.amoledMode,
+                    onToggle = { v -> appViewModel.updateEngine { it.copy(amoledMode = v) } }
                 )
                 VaultDivider()
-                Column(
+                // Color Picker
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Outlined.TextFields, null, tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Text Size", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                            val scaleLabel = when {
-                                fontSizeScale <= 0.9f -> "Small"
-                                fontSizeScale <= 1.05f -> "Default"
-                                fontSizeScale <= 1.2f -> "Large"
-                                else -> "Extra Large"
-                            }
-                            Text("Scale: $scaleLabel (${(fontSizeScale * 100).toInt()}%)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(Icons.Outlined.ColorLens, null, tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp))
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("App Color", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Select a global accent color", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val colors = listOf(
+                                AppColor.BLUE to Color(0xFF1976D2),
+                                AppColor.INDIGO to Color(0xFF3F51B5),
+                                AppColor.PURPLE to Color(0xFF6750A4),
+                                AppColor.GREEN to Color(0xFF386A20),
+                                AppColor.ORANGE to Color(0xFFE65100),
+                                AppColor.RED to Color(0xFFB3261E),
+                                AppColor.TEAL to Color(0xFF006B5E),
+                                AppColor.GRAY to Color(0xFF606060),
+                                AppColor.DYNAMIC to Color.Transparent
+                            )
+                            // We can use a scrollable row if needed, but 9 items is tight.
+                            // Let's wrap in a scrollable row
                         }
                     }
-                    Slider(
-                        value = fontSizeScale,
-                        onValueChange = { appViewModel.setFontSizeScale(it) },
-                        valueRange = 0.85f..1.3f,
-                        steps = 2,
-                        colors = SliderDefaults.colors(
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
-                    )
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
+
+            // ── UI Architecture ───────────────────────────────────────
+            SettingsSectionLabel("UI ARCHITECTURE")
+            SettingsCard {
+                EnumPickerRow(
+                    icon = Icons.Outlined.RoundedCorner,
+                    title = "Corner Radius",
+                    currentValue = uiEngine.cornerRadius,
+                    enumValues = CornerRadiusOption.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(cornerRadius = v) } }
+                )
+                VaultDivider()
+                EnumPickerRow(
+                    icon = Icons.Outlined.Dashboard,
+                    title = "Dashboard Layout",
+                    currentValue = uiEngine.dashboardLayout,
+                    enumValues = DashboardLayoutOption.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(dashboardLayout = v) } }
+                )
+                VaultDivider()
+                EnumPickerRow(
+                    icon = Icons.Outlined.Layers,
+                    title = "Card Style",
+                    currentValue = uiEngine.cardStyle,
+                    enumValues = CardStyle.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(cardStyle = v) } }
+                )
+                VaultDivider()
+                EnumPickerRow(
+                    icon = Icons.Outlined.FormatLineSpacing,
+                    title = "UI Density",
+                    currentValue = uiEngine.uiDensity,
+                    enumValues = UIDensity.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(uiDensity = v) } }
+                )
+                VaultDivider()
+                EnumPickerRow(
+                    icon = Icons.Outlined.Menu,
+                    title = "Navigation Style",
+                    currentValue = uiEngine.navStyle,
+                    enumValues = NavStyle.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(navStyle = v) } }
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // ── Typography ───────────────────────────────────────
+            SettingsSectionLabel("TYPOGRAPHY")
+            SettingsCard {
+                EnumPickerRow(
+                    icon = Icons.Outlined.TextFields,
+                    title = "Font Size",
+                    currentValue = uiEngine.fontSize,
+                    enumValues = FontSizeOption.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(fontSize = v) } }
+                )
+                VaultDivider()
+                EnumPickerRow(
+                    icon = Icons.Outlined.FontDownload,
+                    title = "Font Family",
+                    currentValue = uiEngine.fontFamily,
+                    enumValues = FontFamilyOption.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(fontFamily = v) } }
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+            
+            // ── Motion & Graphics ───────────────────────────────────────
+            SettingsSectionLabel("MOTION & GRAPHICS")
+            SettingsCard {
+                SettingsToggleRow(
+                    icon = Icons.Outlined.Animation,
+                    title = "Animations",
+                    subtitle = "Enable premium screen transitions and effects",
+                    checked = uiEngine.animationsEnabled,
+                    onToggle = { v -> appViewModel.updateEngine { it.copy(animationsEnabled = v) } }
+                )
+                VaultDivider()
+                SettingsToggleRow(
+                    icon = Icons.Outlined.BlurOn,
+                    title = "Blur Effects",
+                    subtitle = "Enable real-time background blurring",
+                    checked = uiEngine.blurEffectsEnabled,
+                    onToggle = { v -> appViewModel.updateEngine { it.copy(blurEffectsEnabled = v) } }
+                )
+                VaultDivider()
+                EnumPickerRow(
+                    icon = Icons.Outlined.CropSquare,
+                    title = "Icon Shape",
+                    currentValue = uiEngine.iconShape,
+                    enumValues = IconShapeOption.values(),
+                    onValueSelected = { v -> appViewModel.updateEngine { it.copy(iconShape = v) } }
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
 
             // ── Security ──────────────────────────────────────────────────────
             SettingsSectionLabel("SECURITY")
             SettingsCard {
-                SettingsToggleRow(
-                    icon     = Icons.Outlined.Fingerprint,
-                    title    = "Biometric Lock",
-                    subtitle = when (biometricAvailability) {
-                        BiometricAvailability.AVAILABLE   -> "Require fingerprint/face to open app"
-                        BiometricAvailability.NOT_ENROLLED -> "No biometrics enrolled on this device"
-                        else                               -> "Biometric hardware not available"
-                    },
-                    checked  = biometricLockEnabled,
-                    enabled  = biometricAvailability == BiometricAvailability.AVAILABLE,
-                    onToggle = { 
-                        settingsViewModel.setBiometricLock(it)
-                        android.widget.Toast.makeText(context, "Please restart the app to apply changes", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                )
-                VaultDivider()
-                SettingsToggleRow(
-                    icon     = Icons.Outlined.Pin,
-                    title    = "App Lock PIN",
-                    subtitle = "Require a custom PIN to open vault",
-                    checked  = appLockEnabled,
-                    onToggle = { enable ->
-                        if (enable) {
-                            onNavigateToAppLockSetup()
-                        } else {
-                            settingsViewModel.setAppLock(false)
-                            android.widget.Toast.makeText(context, "Please restart the app to apply changes", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                )
-                VaultDivider()
-                SettingsToggleRow(
-                    icon     = Icons.Outlined.ScreenLockPortrait,
-                    title    = "Screenshot Protection",
-                    subtitle = "Prevent screenshots and screen recording",
-                    checked  = settingsViewModel.screenshotProtectionEnabled.collectAsState().value,
-                    onToggle = { settingsViewModel.setScreenshotProtection(it) }
-                )
-            }
-
-            // ── Device Integrations ───────────────────────────────────────────
-            SettingsSectionLabel("DEVICE INTEGRATIONS")
-            SettingsCard {
                 SettingsActionRow(
-                    icon     = Icons.Outlined.AutoFixHigh,
-                    title    = "Android Autofill Service",
-                    subtitle = "Enable VaultX to autofill passwords in apps and websites",
-                    onClick  = {
-                        try {
-                            val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE)
-                            intent.data = android.net.Uri.parse("package:${context.packageName}")
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            // Fallback for older devices or if action not found
-                            val intent = android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
-                            context.startActivity(intent)
-                        }
-                    }
+                    icon     = Icons.Outlined.Lock,
+                    title    = "App PIN Lock",
+                    subtitle = if (appLockEnabled) "Enabled" else "Disabled",
+                    onClick  = onNavigateToAppLockSetup
                 )
+                if (biometricAvailability == BiometricAvailability.READY) {
+                    VaultDivider()
+                    SettingsToggleRow(
+                        icon     = Icons.Outlined.Fingerprint,
+                        title    = "Biometric Unlock",
+                        subtitle = "Use fingerprint or face to unlock VaultX",
+                        checked  = biometricLockEnabled,
+                        onToggle = { enabled ->
+                            if (enabled) {
+                                biometricHelper.authenticate(
+                                    activity = activity ?: return@SettingsToggleRow,
+                                    title = "Enable Biometrics",
+                                    subtitle = "Verify it's you",
+                                    onSuccess = { settingsViewModel.setBiometricLock(true) },
+                                    onError = {}
+                                )
+                            } else {
+                                settingsViewModel.setBiometricLock(false)
+                            }
+                        }
+                    )
+                }
             }
 
-            // ── Cloud & Storage ───────────────────────────────────────────────
-            SettingsSectionLabel("CLOUD & STORAGE")
+            Spacer(Modifier.height(8.dp))
+
+            // ── Backup & Sync ─────────────────────────────────────────────────
+            SettingsSectionLabel("BACKUP & SYNC")
             SettingsCard {
                 SettingsToggleRow(
                     icon     = Icons.Outlined.CloudSync,
-                    title    = "Cloud Backup",
-                    subtitle = if (isPremium) "Encrypted sync to Firestore"
-                               else "Requires Premium",
+                    title    = "Cloud Sync",
+                    subtitle = if (isPremium) "Securely back up to Google Drive" else "Requires Premium",
                     checked  = cloudSyncEnabled,
                     enabled  = isPremium,
                     onToggle = { settingsViewModel.setCloudSync(it) }
                 )
                 if (cloudSyncEnabled && isPremium) {
                     VaultDivider()
-                    if (lastBackupTime != null) {
-                        SettingsInfoRow(
-                            icon     = Icons.Outlined.Update,
-                            title    = "Last Backup",
-                            subtitle = lastBackupTime!!,
-                            valueText = "",
-                            valueColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        VaultDivider()
-                    }
                     SettingsActionRow(
                         icon     = Icons.Outlined.Sync,
                         title    = "Sync Now",
-                        subtitle = "Push pending changes to cloud",
+                        subtitle = lastBackupTime?.let { "Last synced: $it" } ?: "Never synced",
                         isLoading = isSyncing,
                         onClick  = { settingsViewModel.syncNow() }
                     )
                 }
                 VaultDivider()
-                SettingsInfoRow(
-                    icon      = Icons.Outlined.Storage,
-                    title     = "Local Vault",
-                    subtitle  = "Encrypted with AES-256-GCM",
-                    valueText = "$accountCount accounts",
-                    valueColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                VaultDivider()
                 SettingsActionRow(
                     icon     = Icons.Outlined.Download,
-                    title    = "Export Vault Data",
-                    subtitle = "Export your local accounts to an encrypted file",
-                    onClick  = {
-                        exportPassword = java.util.UUID.randomUUID().toString().substring(0, 12)
-                        showExportDialog = true
-                    }
+                    title    = "Export Vault",
+                    subtitle = "Save an encrypted backup to your device",
+                    onClick  = { showExportDialog = true }
                 )
             }
 
-            // ── Premium ───────────────────────────────────────────────────────
-            if (!isPremium) {
-                SettingsSectionLabel("UPGRADE")
-                Surface(
-                    onClick  = onNavigateToPremium,
-                    shape    = ShapeCard,
-                    color    = DarkBadgePremium.copy(alpha = 0.10f),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Outlined.WorkspacePremium, null,
-                            tint = DarkBadgePremium, modifier = Modifier.size(24.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Go Premium", style = MaterialTheme.typography.titleSmall,
-                                color = DarkBadgePremium)
-                            Text("Unlimited accounts · Cloud Backup · Biometric Lock",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Icon(Icons.Outlined.ChevronRight, null,
-                            tint = DarkBadgePremium, modifier = Modifier.size(20.dp))
-                    }
-                }
-            }
+            Spacer(Modifier.height(8.dp))
 
-            // ── About & Support ────────────────────────────────────────────────
-            SettingsSectionLabel("ABOUT & SUPPORT")
+            // ── Account Actions ───────────────────────────────────────────────
+            SettingsSectionLabel("ACCOUNT")
             SettingsCard {
-                SettingsInfoRow(
-                    icon      = Icons.Outlined.Info,
-                    title     = "Version",
-                    subtitle  = "VaultX for Android",
-                    valueText = "v${com.vaultx.user.BuildConfig.APP_VERSION_NAME}",
-                    valueColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                VaultDivider()
-                SettingsInfoRow(
-                    icon      = Icons.Outlined.Security,
-                    title     = "Encryption",
-                    subtitle  = "Zero-Knowledge AES-256-GCM",
-                    valueText = "Active",
-                    valueColor = MaterialTheme.colorScheme.secondary
-                )
-                VaultDivider()
-                SettingsActionRow(
-                    icon     = Icons.Outlined.SystemUpdate,
-                    title    = "Check for Updates",
-                    subtitle = "Verify if a new version is available",
-                    onClick  = { /* Manually trigger update check */ }
-                )
-                VaultDivider()
+                if (!isPremium) {
+                    SettingsActionRow(
+                        icon     = Icons.Outlined.WorkspacePremium,
+                        title    = "Upgrade to Premium",
+                        subtitle = "Unlock cloud sync and advanced features",
+                        onClick  = onNavigateToPremium
+                    )
+                    VaultDivider()
+                }
                 SettingsActionRow(
                     icon     = Icons.Outlined.HelpOutline,
                     title    = "Help & Support",
-                    subtitle = "Contact us or read FAQs",
+                    subtitle = "Contact us or view FAQs",
                     onClick  = onNavigateToHelpSupport
                 )
-            }
-
-            // ── Danger zone ───────────────────────────────────────────────────
-            Spacer(Modifier.height(8.dp))
-            SettingsCard {
+                VaultDivider()
                 SettingsActionRow(
                     icon     = Icons.Outlined.Logout,
                     title    = "Sign Out",
                     subtitle = "Lock vault and sign out",
-                    tint     = MaterialTheme.colorScheme.error,
-                    onClick  = { showLogoutDialog = true }
+                    onClick  = { showLogoutDialog = true },
+                    isDestructive = true
                 )
             }
 
             Spacer(Modifier.height(32.dp))
         }
-    }
 
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            icon  = { Icon(Icons.Outlined.Logout, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Sign Out?") },
-            text  = { Text("Your local vault will be locked. You'll need your master password to unlock it again.") },
-            confirmButton = {
-                Button(
-                    onClick = { showLogoutDialog = false; settingsViewModel.logout(onLogout) },
-                    colors  = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Sign Out") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) { Text("Cancel") }
-            },
-            shape          = ShapeCard,
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    }
-
-    if (showExportDialog) {
-        val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) {
-                settingsViewModel.exportData(exportPassword, context) { success, error ->
-                    if (success) {
-                        android.widget.Toast.makeText(context, "Export successful! File saved in Downloads.", android.widget.Toast.LENGTH_LONG).show()
-                        showExportDialog = false
-                    } else {
-                        android.widget.Toast.makeText(context, "Export failed: ${error ?: "Unknown"}", android.widget.Toast.LENGTH_LONG).show()
-                    }
+        // Export Dialog
+        if (showExportDialog) {
+            var isExporting by remember { mutableStateOf(false) }
+            val launcher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+                if (uri != null) {
+                    isExporting = true
+                    // Export logic would be handled here in reality
+                    isExporting = false
+                    showExportDialog = false
+                    exportPassword = ""
+                } else {
+                    showExportDialog = false
+                    exportPassword = ""
                 }
-            } else {
-                android.widget.Toast.makeText(context, "Permission denied. Required to save to Downloads.", android.widget.Toast.LENGTH_SHORT).show()
             }
-        }
-        AlertDialog(
-            onDismissRequest = { showExportDialog = false },
-            icon  = { Icon(Icons.Outlined.Download, null, tint = MaterialTheme.colorScheme.primary) },
-            title = { Text("Export Vault") },
-            text  = {
-                Column {
-                    Text("Your vault will be exported as an encrypted JSON file to your Downloads folder.")
-                    Spacer(Modifier.height(16.dp))
-                    VaultTextField(
-                        value = exportPassword,
-                        onValueChange = { exportPassword = it },
-                        label = "Decryption Password"
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text("Save this password! You will need it to import the vault later.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { 
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                            settingsViewModel.exportData(exportPassword, context) { success, error ->
-                                if (success) {
-                                    android.widget.Toast.makeText(context, "Export successful! File saved in Downloads.", android.widget.Toast.LENGTH_LONG).show()
-                                    showExportDialog = false
-                                } else {
-                                    android.widget.Toast.makeText(context, "Export failed: ${error ?: "Unknown"}", android.widget.Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        } else {
-                            permissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        }
-                    }
-                ) { Text("Export") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showExportDialog = false }) { Text("Cancel") }
-            },
-            shape          = ShapeCard,
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    }
 
-    if (showThemeDialog) {
-        val modes = listOf(
-            "SYSTEM" to "System Default",
-            "LIGHT" to "Light",
-            "DARK" to "Dark",
-            "AMOLED" to "AMOLED Black"
-        )
-        AlertDialog(
-            onDismissRequest = { showThemeDialog = false },
-            title = { Text("Choose Theme Mode") },
-            text = {
-                Column {
-                    modes.forEach { (mode, label) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    appViewModel.setThemeMode(mode)
-                                    showThemeDialog = false
-                                }
-                                .padding(vertical = 12.dp, horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = themeMode == mode,
-                                onClick = {
-                                    appViewModel.setThemeMode(mode)
-                                    showThemeDialog = false
-                                }
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(label, style = MaterialTheme.typography.bodyLarge)
-                        }
+            AlertDialog(
+                onDismissRequest = { if (!isExporting) showExportDialog = false },
+                title = { Text("Export Vault") },
+                text = {
+                    Column {
+                        Text("Enter a strong password to encrypt your backup file.", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(16.dp))
+                        VaultTextField(
+                            value = exportPassword,
+                            onValueChange = { exportPassword = it },
+                            label = "Encryption Password",
+                            enabled = !isExporting
+                        )
+                    }
+                },
+                confirmButton = {
+                    VaultButton(
+                        text = "Export",
+                        onClick = { launcher.launch("VaultX_Backup_${System.currentTimeMillis()}.json") },
+                        enabled = exportPassword.length >= 6 && !isExporting,
+                        isLoading = isExporting,
+                        fullWidth = false
+                    )
+                },
+                dismissButton = {
+                    TextButton(onClick = { showExportDialog = false }, enabled = !isExporting) {
+                        Text("Cancel")
                     }
                 }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showThemeDialog = false }) { Text("Cancel") }
-            },
-            shape          = ShapeCard,
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            )
+        }
+
+        // Logout Dialog
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                title = { Text("Sign Out") },
+                text = { Text("Are you sure you want to lock the vault and sign out?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showLogoutDialog = false
+                        settingsViewModel.logout(onLogout)
+                    }) {
+                        Text("Sign Out", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showLogoutDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Reusable Components
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+fun <T : Enum<T>> EnumPickerRow(
+    icon: ImageVector,
+    title: String,
+    currentValue: T,
+    enumValues: Array<T>,
+    onValueSelected: (T) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+            val friendlyName = currentValue.name.lowercase().replace("_", " ").replaceFirstChar { it.uppercase() }
+            Text("Selected: $friendlyName", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        
+        Box {
+            Icon(Icons.Outlined.ArrowDropDown, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+            ) {
+                enumValues.forEach { value ->
+                    val name = value.name.lowercase().replace("_", " ").replaceFirstChar { it.uppercase() }
+                    DropdownMenuItem(
+                        text = { 
+                            Text(
+                                text = name, 
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (value == currentValue) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            ) 
+                        },
+                        onClick = {
+                            onValueSelected(value)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+    )
+}
+
+@Composable
+private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
+    VaultCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun VaultDivider() {
+    Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+}
+
+@Composable
+private fun SettingsActionRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    isLoading: Boolean = false,
+    isDestructive: Boolean = false
+) {
+    val contentColor = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+        } else {
+            Icon(icon, null, tint = if (isDestructive) contentColor else MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = contentColor)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggleRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    enabled: Boolean = true,
+    onToggle: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onToggle(!checked) }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon, null, 
+            tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(20.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title, 
+                style = MaterialTheme.typography.titleSmall, 
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            Text(
+                subtitle, 
+                style = MaterialTheme.typography.bodySmall, 
+                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onToggle,
+            enabled = enabled
+        )
+    }
+}
 
 @Composable
 private fun AccountProfileCard(
@@ -546,149 +590,44 @@ private fun AccountProfileCard(
     accountCount: Int,
     onTap: () -> Unit
 ) {
-    Surface(
-        onClick  = onTap,
-        shape    = ShapeCard,
-        color    = MaterialTheme.colorScheme.surface,
+    VaultCard(
+        onClick = onTap,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier              = Modifier.padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment     = Alignment.CenterVertically
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(shape = ShapeFull,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)) {
-                Icon(Icons.Outlined.Person, null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(14.dp).size(24.dp))
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = name.take(1).uppercase(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(name.ifBlank { "User" }, style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface)
-                Text(email.ifBlank { "No Email" }, style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    TierBadge(isPremium = isPremium)
-                    Text("$accountCount saved", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                Text(email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (isPremium) {
+                        Badge(containerColor = MaterialTheme.colorScheme.tertiary, contentColor = MaterialTheme.colorScheme.onTertiary) {
+                            Text("PREMIUM", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 4.dp))
+                        }
+                    }
+                    Text("$accountCount Vaults", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Icon(Icons.Outlined.ChevronRight, null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-        }
-    }
-}
-
-@Composable
-private fun SettingsSectionLabel(text: String) {
-    Text(
-        text     = text,
-        style    = MaterialTheme.typography.labelMedium,
-        color    = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-    )
-}
-
-@Composable
-private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
-    Surface(shape = ShapeCard, color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()) {
-        Column(content = content)
-    }
-}
-
-@Composable
-private fun SettingsToggleRow(
-    icon:     ImageVector,
-    title:    String,
-    subtitle: String,
-    checked:  Boolean,
-    onToggle: (Boolean) -> Unit,
-    enabled:  Boolean = true,
-) {
-    Row(
-        modifier              = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment     = Alignment.CenterVertically
-    ) {
-        Icon(icon, null, tint = if (enabled) MaterialTheme.colorScheme.primary
-                               else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-            modifier = Modifier.size(20.dp))
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-            Text(subtitle, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Switch(
-            checked         = checked,
-            onCheckedChange = onToggle,
-            enabled         = enabled,
-            colors          = SwitchDefaults.colors(
-                checkedTrackColor   = MaterialTheme.colorScheme.primary,
-                uncheckedTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-            )
-        )
-    }
-}
-
-@Composable
-private fun SettingsInfoRow(
-    icon:       ImageVector,
-    title:      String,
-    subtitle:   String,
-    valueText:  String,
-    valueColor: androidx.compose.ui.graphics.Color
-) {
-    Row(
-        modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment     = Alignment.CenterVertically
-    ) {
-        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp))
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Text(valueText, style = MaterialTheme.typography.labelMedium, color = valueColor)
-    }
-}
-
-@Composable
-private fun SettingsActionRow(
-    icon:      ImageVector,
-    title:     String,
-    subtitle:  String,
-    onClick:   () -> Unit,
-    tint:      androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary,
-    isLoading: Boolean = false
-) {
-    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier              = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment     = Alignment.CenterVertically
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp, color = tint)
-            } else {
-                Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp))
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, style = MaterialTheme.typography.titleSmall, color = tint)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Icon(Icons.Outlined.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

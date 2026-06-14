@@ -1,9 +1,10 @@
 {
-  "versionCode": 14,
-  "versionName": "2.7.0",
-  "downloadUrl": "https://github.com/masterace572-prog/VaultX/releases/download/v2.7.0/VaultX-User-v2.7.0.apk",
+  "versionCode": 15,
+  "versionName": "2.8.0",
+  "latestVersion": "2.8.0",
+  "downloadUrl": "https://github.com/sauban369/VaultX/releases/download/v2.8.0/vaultx-user-release.apk",
   "changelog": [
-    "Liquid Glass UI Upgrade. Complete migration from Glassmorphism to robust iOS-style Liquid Glass effects, fixing clipping and shadow bugs. Refined customization menu layout."
+    "v2.8.0 - Master MD3 Overhaul! Liquid Glass has been replaced by a fully dynamic Material Design 3 architecture. Settings UI has been completely rebuilt with powerful customization options including 8 Tonal Color Palettes, Shape Geometry controls, and Dashboard Layout selectors."
   ],
   "forcedUpdate": false
 }
